@@ -2,6 +2,12 @@
 
 Multi-agent AI system for job search, resume tailoring, and application tracking. Built with LangGraph orchestration and MCP (Model Context Protocol) server.
 
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/job-assistant?referralCode=EiriniOr)
+
+## Live Demo
+
+🚀 **[Try it live](https://job-assistant.up.railway.app)** (after deployment)
+
 ## Architecture
 
 ```
@@ -97,6 +103,25 @@ cd frontend && npm run dev
 ```
 
 Open http://localhost:3000
+
+### Deploy to Cloud
+
+**Option 1: Railway (one-click)**
+1. Go to [railway.app](https://railway.app/new)
+2. "Deploy from GitHub repo" → select `job-application-assistant`
+3. Add env vars: `ANTHROPIC_API_KEY`, `PORT=8000`
+4. Deploy — Railway auto-detects Dockerfile
+
+**Option 2: Render.com**
+1. Go to [render.com](https://render.com)
+2. "New Blueprint" → connect GitHub → select repo
+3. Uses `render.yaml` to configure services automatically
+
+**Option 3: Backend + Vercel Frontend**
+1. Deploy backend to Railway/Render
+2. Go to [vercel.com](https://vercel.com) → import repo
+3. Root directory: `frontend`
+4. Add `NEXT_PUBLIC_API_URL` = backend URL
 
 ### With Docker
 
