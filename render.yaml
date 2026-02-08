@@ -1,0 +1,36 @@
+# Render.com Blueprint for Job Application Assistant
+# Deploy at: https://dashboard.render.com/blueprints
+
+services:
+  # FastAPI Backend
+  - type: web
+    name: job-assistant-api
+    runtime: python
+    buildCommand: pip install -e .
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ADZUNA_APP_ID
+        sync: false
+      - key: ADZUNA_APP_KEY
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/jobs.db
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+
+  # Next.js Frontend
+  - type: web
+    name: job-assistant-dashboard
+    runtime: node
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          name: job-assistant-api
+          type: web
+          property: host
