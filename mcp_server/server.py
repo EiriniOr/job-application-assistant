@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mcp.server.fastmcp import FastMCP
 
-from tools.job_boards import search_adzuna, search_remoteok
+from tools.job_boards import search_arbetsformedlingen, search_adzuna, search_remoteok
 from tools.resume_parser import parse_resume as _parse_resume
 from tools.database import (
     init_db_sync,
@@ -51,22 +51,29 @@ async def search_jobs(
     source: str = "all",
     limit: int = 10,
 ) -> str:
-    """Search for jobs across Adzuna and RemoteOK.
+    """Search for jobs across Arbetsförmedlingen, RemoteOK, and Adzuna.
 
     Args:
         keywords: Search terms (e.g. "python developer", "data scientist")
-        location: City or region (used for Adzuna)
+        location: City or region
         remote_only: If true, only search RemoteOK
-        source: "adzuna", "remoteok", or "all"
+        source: "arbetsformedlingen", "remoteok", "adzuna", or "all"
         limit: Max results per source
     """
     results = []
 
+    # Arbetsförmedlingen (Swedish jobs) - FREE, primary source
+    if source in ("all", "arbetsformedlingen") and not remote_only:
+        af_jobs = await search_arbetsformedlingen(keywords=keywords, limit=limit)
+        results.extend(af_jobs)
+
+    # RemoteOK (remote jobs only)
     if source in ("all", "remoteok") or remote_only:
         tag = keywords.split()[0].lower() if keywords else "python"
         remoteok_jobs = await search_remoteok(tags=tag, limit=limit)
         results.extend(remoteok_jobs)
 
+    # Adzuna (requires API key)
     if not remote_only and source in ("all", "adzuna"):
         adzuna_jobs = await search_adzuna(keywords=keywords, location=location, results_per_page=limit)
         results.extend(adzuna_jobs)

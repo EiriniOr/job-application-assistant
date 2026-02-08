@@ -1,7 +1,7 @@
 """Job listing routes."""
 
 from fastapi import APIRouter
-from mcp_server.tools.job_boards import search_adzuna, search_remoteok
+from mcp_server.tools.job_boards import search_arbetsformedlingen, search_adzuna, search_remoteok
 from mcp_server.tools.database import save_job, get_jobs, get_job
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -22,10 +22,12 @@ async def search(
 ):
     results = []
 
+    # Arbetsförmedlingen (Swedish jobs) - FREE, primary source
     if not remote_only:
-        adzuna = await search_adzuna(keywords=keywords, location=location, results_per_page=limit)
-        results.extend(adzuna)
+        af_jobs = await search_arbetsformedlingen(keywords=keywords, limit=limit)
+        results.extend(af_jobs)
 
+    # RemoteOK (remote/tech jobs)
     tag = keywords.split()[0].lower() if keywords else "python"
     remoteok = await search_remoteok(tags=tag, limit=limit)
     results.extend(remoteok)

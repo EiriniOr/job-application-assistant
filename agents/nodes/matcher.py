@@ -5,7 +5,7 @@ import os
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from agents.state import AgentState
-from mcp_server.tools.job_boards import search_adzuna, search_remoteok
+from mcp_server.tools.job_boards import search_arbetsformedlingen, search_adzuna, search_remoteok
 from mcp_server.tools.database import save_job, save_match, get_or_create_default_user
 
 MATCHER_SYSTEM = """You are a job matching specialist. Given a user's resume/skills and a list of job postings,
@@ -41,9 +41,11 @@ async def matcher_node(state: AgentState) -> dict:
     # Fetch jobs from APIs
     all_jobs = []
     try:
+        # Arbetsförmedlingen (Swedish jobs) - FREE, primary source
         if not remote_only:
-            adzuna_jobs = await search_adzuna(keywords=keywords, location=location)
-            all_jobs.extend(adzuna_jobs)
+            af_jobs = await search_arbetsformedlingen(keywords=keywords)
+            all_jobs.extend(af_jobs)
+        # RemoteOK (remote/tech jobs)
         remoteok_jobs = await search_remoteok(tags=keywords.split()[0].lower())
         all_jobs.extend(remoteok_jobs)
     except Exception as e:

@@ -1,11 +1,59 @@
-"""Job board API integrations: Adzuna (free tier) + RemoteOK (free)."""
+"""Job board API integrations: Arbetsförmedlingen (free) + RemoteOK (free) + Adzuna."""
 
 import os
 import httpx
 
+# Arbetsförmedlingen (Swedish Public Employment Service) - FREE, no auth
+AF_BASE = "https://jobsearch.api.jobtechdev.se"
+
+# Adzuna - requires free account
 ADZUNA_APP_ID = os.getenv("ADZUNA_APP_ID", "")
 ADZUNA_APP_KEY = os.getenv("ADZUNA_APP_KEY", "")
 ADZUNA_BASE = "https://api.adzuna.com/v1/api/jobs"
+
+
+async def search_arbetsformedlingen(
+    keywords: str,
+    limit: int = 20,
+) -> list[dict]:
+    """Search Arbetsförmedlingen/Platsbanken. FREE, no auth needed."""
+    url = f"{AF_BASE}/search"
+    params = {
+        "q": keywords,
+        "limit": limit,
+    }
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(url, params=params)
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
+
+    jobs = []
+    for hit in data.get("hits", []):
+        # Extract salary if available
+        salary = hit.get("salary_description", {})
+        salary_min = None
+        salary_max = None
+
+        # Location
+        workplace = hit.get("workplace_address", {})
+        location = workplace.get("city") or workplace.get("municipality") or "Sweden"
+
+        jobs.append({
+            "source": "arbetsformedlingen",
+            "source_id": hit.get("id", ""),
+            "title": hit.get("headline", ""),
+            "company": hit.get("employer", {}).get("name", "Unknown"),
+            "location": location,
+            "is_remote": hit.get("remote_work", False),
+            "description": hit.get("description", {}).get("text", "")[:500],
+            "salary_min": salary_min,
+            "salary_max": salary_max,
+            "url": hit.get("webpage_url", ""),
+            "posted_at": hit.get("publication_date", ""),
+        })
+    return jobs
 
 
 async def search_adzuna(
