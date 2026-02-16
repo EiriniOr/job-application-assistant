@@ -1,14 +1,26 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
+// Debug: log what API_BASE is set to
+if (typeof window !== "undefined") {
+  console.log("[API] NEXT_PUBLIC_API_URL =", API_BASE || "(empty - using relative paths)");
+}
+
 async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, {
+  const fullUrl = `${API_BASE}${url}`;
+  console.log("[API] Fetching:", fullUrl);
+
+  const res = await fetch(fullUrl, {
     ...options,
     headers: {
       "Content-Type": "application/json",
       ...options?.headers,
     },
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+  if (!res.ok) {
+    console.error("[API] Error:", res.status, "for URL:", fullUrl);
+    throw new Error(`API error: ${res.status}`);
+  }
   return res.json();
 }
 
@@ -44,14 +56,23 @@ export const getApplication = (id: string) => fetcher<Application>(`/api/applica
 
 // Resumes
 export const uploadResume = async (file: File) => {
+  const fullUrl = `${API_BASE}/api/resumes/upload`;
+  console.log("[API] Uploading resume to:", fullUrl, "file:", file.name);
+
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch(`${API_BASE}/api/resumes/upload`, {
+  const res = await fetch(fullUrl, {
     method: "POST",
     body: formData,
   });
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-  return res.json();
+
+  if (!res.ok) {
+    console.error("[API] Upload error:", res.status, "for URL:", fullUrl);
+    throw new Error(`Upload failed: ${res.status}`);
+  }
+  const result = await res.json();
+  console.log("[API] Upload success:", result);
+  return result;
 };
 
 export const getResumes = () => fetcher<{ count: number; resumes: Resume[] }>("/api/resumes");

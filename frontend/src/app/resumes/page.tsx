@@ -12,6 +12,8 @@ export default function ResumesPage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["resumes"],
@@ -21,6 +23,8 @@ export default function ResumesPage() {
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       setUploading(true);
+      setUploadError(null);
+      setUploadSuccess(false);
       try {
         return await uploadResume(file);
       } finally {
@@ -28,7 +32,12 @@ export default function ResumesPage() {
       }
     },
     onSuccess: () => {
+      setUploadSuccess(true);
       queryClient.invalidateQueries({ queryKey: ["resumes"] });
+    },
+    onError: (err: Error) => {
+      console.error("[Resume] Upload failed:", err.message);
+      setUploadError(err.message);
     },
   });
 
@@ -72,6 +81,17 @@ export default function ResumesPage() {
           </Button>
         </div>
       </div>
+
+      {uploadError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          Upload failed: {uploadError}
+        </div>
+      )}
+      {uploadSuccess && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700">
+          Resume uploaded successfully!
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-12">
