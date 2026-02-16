@@ -61,9 +61,11 @@ export default function JobsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Search Jobs</h1>
+        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+          Search Jobs
+        </h1>
         <p className="text-muted-foreground mt-1">
-          Find jobs from Adzuna and RemoteOK
+          Search Swedish jobs from Arbetsförmedlingen and remote positions from RemoteOK
         </p>
       </div>
 

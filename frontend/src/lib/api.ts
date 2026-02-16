@@ -77,6 +77,7 @@ export interface Job {
   salary_max: number | null;
   description: string | null;
   requirements: string[] | null;
+  url: string | null;
   posted_at: string | null;
   created_at: string;
 }
