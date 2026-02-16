@@ -97,7 +97,7 @@ export function JobCard({ job, matchScore, onSave, isSaving }: JobCardProps) {
               size="sm"
               variant="outline"
               className="flex-1"
-              onClick={() => window.open(job.url, "_blank")}
+              onClick={() => window.open(job.url!, "_blank")}
             >
               View Job
             </Button>
