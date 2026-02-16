@@ -1,4 +1,5 @@
 "use client";
+// v2 - force cache bust
 
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,13 +20,20 @@ export default function JobsPage() {
   const queryClient = useQueryClient();
 
   const searchMutation = useMutation({
-    mutationFn: () => searchJobs({ keywords, location, remote_only: remoteOnly }),
+    mutationFn: async () => {
+      console.log("[JobSearch] Searching for:", keywords);
+      const result = await searchJobs({ keywords, location, remote_only: remoteOnly });
+      console.log("[JobSearch] Got results:", result.count);
+      return result;
+    },
     onSuccess: (data) => {
+      console.log("[JobSearch] Success, jobs:", data.jobs.length);
       setSearchResults(data.jobs);
       setHasSearched(true);
       setError(null);
     },
     onError: (err: Error) => {
+      console.error("[JobSearch] Error:", err.message);
       setError(err.message);
       setHasSearched(true);
     },
