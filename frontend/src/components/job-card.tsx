@@ -9,11 +9,12 @@ import type { Job, MatchScore } from "@/lib/api";
 interface JobCardProps {
   job: Job;
   matchScore?: MatchScore;
-  onSave?: (jobId: string) => void;
+  onSave?: (job: Job) => void;
   isSaving?: boolean;
+  isSaved?: boolean;
 }
 
-export function JobCard({ job, matchScore, onSave, isSaving }: JobCardProps) {
+export function JobCard({ job, matchScore, onSave, isSaving, isSaved }: JobCardProps) {
   const formatSalary = (min: number | null, max: number | null) => {
     if (!min && !max) return null;
     const fmt = (n: number) => `$${Math.round(n / 1000)}k`;
@@ -105,12 +106,12 @@ export function JobCard({ job, matchScore, onSave, isSaving }: JobCardProps) {
           {onSave && (
             <Button
               size="sm"
-              onClick={() => onSave(job.id || job.source_id || "")}
-              disabled={isSaving}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+              onClick={() => onSave(job)}
+              disabled={isSaving || isSaved}
+              className={`flex-1 ${isSaved ? "bg-emerald-500 hover:bg-emerald-500" : "bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"}`}
             >
               <Briefcase className="h-4 w-4 mr-2" />
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? "Saving..." : isSaved ? "Saved!" : "Save"}
             </Button>
           )}
         </div>

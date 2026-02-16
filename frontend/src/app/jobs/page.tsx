@@ -17,6 +17,8 @@ export default function JobsPage() {
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
+  const [savingJobId, setSavingJobId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const searchMutation = useMutation({
@@ -58,8 +60,19 @@ export default function JobsPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (jobId: string) => createApplication(jobId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["applications"] }),
+    mutationFn: async (job: Job) => {
+      setSavingJobId(job.id || job.source_id || "");
+      return createApplication(job);
+    },
+    onSuccess: (_, job) => {
+      const jobId = job.id || job.source_id || "";
+      setSavedJobIds((prev) => new Set(prev).add(jobId));
+      setSavingJobId(null);
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    },
+    onError: () => {
+      setSavingJobId(null);
+    },
   });
 
   const handleSearch = (useAI: boolean) => {
@@ -137,8 +150,9 @@ export default function JobsPage() {
               key={job.source_id || idx}
               job={job}
               matchScore={matchScores[job.id]}
-              onSave={(id) => saveMutation.mutate(id)}
-              isSaving={saveMutation.isPending}
+              onSave={(j) => saveMutation.mutate(j)}
+              isSaving={savingJobId === (job.id || job.source_id)}
+              isSaved={savedJobIds.has(job.id || job.source_id || "")}
             />
           ))}
         </div>
