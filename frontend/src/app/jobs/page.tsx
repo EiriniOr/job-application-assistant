@@ -1,12 +1,12 @@
 "use client";
-// v2 - force cache bust
 
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/job-card";
-import { searchJobs, createApplication, runAgent, type Job, type MatchScore } from "@/lib/api";
+import { searchJobs, runAgent, type Job, type MatchScore } from "@/lib/api";
+import { saveApplication, getStoredApplications } from "@/lib/storage";
 import { Search, Loader2, Sparkles } from "lucide-react";
 
 export default function JobsPage() {
@@ -20,6 +20,13 @@ export default function JobsPage() {
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+
+  // Load saved job IDs from localStorage on mount
+  useEffect(() => {
+    const apps = getStoredApplications();
+    const ids = new Set(apps.map((a) => a.job_id));
+    setSavedJobIds(ids);
+  }, []);
 
   const searchMutation = useMutation({
     mutationFn: async () => {
@@ -59,21 +66,18 @@ export default function JobsPage() {
     },
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (job: Job) => {
-      setSavingJobId(job.id || job.source_id || "");
-      return createApplication(job);
-    },
-    onSuccess: (_, job) => {
-      const jobId = job.id || job.source_id || "";
-      setSavedJobIds((prev) => new Set(prev).add(jobId));
-      setSavingJobId(null);
-      queryClient.invalidateQueries({ queryKey: ["applications"] });
-    },
-    onError: () => {
-      setSavingJobId(null);
-    },
-  });
+  const handleSaveJob = (job: Job) => {
+    const jobId = job.id || job.source_id || "";
+    setSavingJobId(jobId);
+
+    // Save to localStorage
+    saveApplication(job);
+
+    // Update UI
+    setSavedJobIds((prev) => new Set(prev).add(jobId));
+    setSavingJobId(null);
+    queryClient.invalidateQueries({ queryKey: ["applications"] });
+  };
 
   const handleSearch = (useAI: boolean) => {
     if (useAI) {
@@ -150,7 +154,7 @@ export default function JobsPage() {
               key={job.source_id || idx}
               job={job}
               matchScore={matchScores[job.id]}
-              onSave={(j) => saveMutation.mutate(j)}
+              onSave={handleSaveJob}
               isSaving={savingJobId === (job.id || job.source_id)}
               isSaved={savedJobIds.has(job.id || job.source_id || "")}
             />

@@ -1,30 +1,29 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getApplications, getJobs } from "@/lib/api";
+import { getStoredApplications } from "@/lib/storage";
+import type { Application } from "@/lib/api";
 import { Briefcase, FileText, Clock, Trophy } from "lucide-react";
 import Link from "next/link";
 
 export default function Dashboard() {
-  const { data: apps } = useQuery({
-    queryKey: ["applications"],
-    queryFn: () => getApplications(),
-  });
+  const [applications, setApplications] = useState<Application[]>([]);
 
-  const { data: jobs } = useQuery({
-    queryKey: ["jobs"],
-    queryFn: () => getJobs(),
-  });
+  // Load applications from localStorage
+  useEffect(() => {
+    const apps = getStoredApplications();
+    setApplications(apps);
+  }, []);
 
   const counts = {
-    saved: apps?.applications.filter((a) => a.status === "saved").length || 0,
-    applied: apps?.applications.filter((a) => a.status === "applied").length || 0,
-    interview: apps?.applications.filter((a) =>
+    saved: applications.filter((a) => a.status === "saved").length,
+    applied: applications.filter((a) => a.status === "applied").length,
+    interview: applications.filter((a) =>
       ["phone_screen", "interview"].includes(a.status)
-    ).length || 0,
-    offer: apps?.applications.filter((a) => a.status === "offer").length || 0,
+    ).length,
+    offer: applications.filter((a) => a.status === "offer").length,
   };
 
   return (
@@ -42,7 +41,7 @@ export default function Dashboard() {
             Job Application Assistant
           </h1>
           <p className="mt-2 text-blue-100 max-w-2xl">
-            AI-powered job search across Arbetsförmedlingen and RemoteOK. Track applications, generate cover letters, and land your dream job.
+            Search jobs from Arbetsförmedlingen and RemoteOK. Track applications with drag-and-drop Kanban board.
           </p>
         </div>
       </div>
@@ -124,16 +123,16 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Applications */}
-      {apps && apps.applications.length > 0 && (
+      {applications.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Recent Applications</h2>
+          <h2 className="text-xl font-semibold mb-4 text-slate-800">Recent Applications</h2>
           <div className="space-y-2">
-            {apps.applications.slice(0, 5).map((app) => (
+            {applications.slice(0, 5).map((app) => (
               <Link key={app.id} href={`/applications/${app.id}`}>
-                <Card className="hover:shadow-sm transition-shadow">
+                <Card className="hover:shadow-sm transition-shadow border-0 bg-white/80 backdrop-blur">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{app.job_title}</p>
+                      <p className="font-medium text-slate-800">{app.job_title}</p>
                       <p className="text-sm text-muted-foreground">{app.company}</p>
                     </div>
                     <Badge variant="outline" className="capitalize">

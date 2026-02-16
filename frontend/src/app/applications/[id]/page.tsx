@@ -1,13 +1,13 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getApplication, updateApplication, runAgent } from "@/lib/api";
-import { ArrowLeft, Building2, Loader2, Sparkles, FileText } from "lucide-react";
-import { useState } from "react";
+import { getStoredApplication, updateStoredApplication } from "@/lib/storage";
+import type { Application } from "@/lib/api";
+import { ArrowLeft, Building2, Loader2, FileText, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const STATUSES = [
   "saved",
@@ -22,33 +22,47 @@ const STATUSES = [
 export default function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [generatedCoverLetter, setGeneratedCoverLetter] = useState<string | null>(null);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [app, setApp] = useState<Application | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notes, setNotes] = useState("");
 
-  const { data: app, isLoading } = useQuery({
-    queryKey: ["application", id],
-    queryFn: () => getApplication(id),
-    enabled: !!id,
-  });
+  // Load application from localStorage
+  useEffect(() => {
+    if (id) {
+      const stored = getStoredApplication(id);
+      setApp(stored);
+      setNotes(stored?.notes || "");
+      setIsLoading(false);
+    }
+  }, [id]);
 
-  const updateMutation = useMutation({
-    mutationFn: (status: string) => updateApplication(id, { status }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["application", id] }),
-  });
+  const handleStatusChange = (status: string) => {
+    if (!app) return;
+    const updated = updateStoredApplication(id, {
+      status,
+      applied_at: status === "applied" ? new Date().toISOString() : app.applied_at,
+    });
+    if (updated) {
+      setApp(updated);
+    }
+  };
 
-  const tailorMutation = useMutation({
-    mutationFn: () => runAgent("tailor_application", { application_id: id }),
-    onSuccess: (data) => {
-      if (data.result.cover_letter) {
-        setGeneratedCoverLetter(data.result.cover_letter);
-      }
-      if (data.result.resume_suggestions) {
-        setSuggestions(data.result.resume_suggestions);
-      }
-      queryClient.invalidateQueries({ queryKey: ["application", id] });
-    },
-  });
+  const handleNotesChange = () => {
+    if (!app) return;
+    const updated = updateStoredApplication(id, { notes });
+    if (updated) {
+      setApp(updated);
+    }
+  };
+
+  const handleDelete = () => {
+    if (confirm("Delete this application?")) {
+      const apps = JSON.parse(localStorage.getItem("job_assistant_applications") || "[]");
+      const filtered = apps.filter((a: Application) => a.id !== id);
+      localStorage.setItem("job_assistant_applications", JSON.stringify(filtered));
+      router.push("/applications");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -59,31 +73,44 @@ export default function ApplicationDetailPage() {
   }
 
   if (!app) {
-    return <div className="text-center py-12">Application not found</div>;
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Application not found</p>
+        <Button variant="link" onClick={() => router.push("/applications")}>
+          Back to Applications
+        </Button>
+      </div>
+    );
   }
-
-  const coverLetter = generatedCoverLetter || app.cover_letter;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{app.job_title}</h1>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Building2 className="h-4 w-4" />
-            <span>{app.company}</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+              {app.job_title}
+            </h1>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Building2 className="h-4 w-4" />
+              <span>{app.company}</span>
+            </div>
           </div>
         </div>
+        <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-red-700">
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete
+        </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Status */}
-        <Card>
+        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-sm">Status</CardTitle>
+            <CardTitle className="text-sm text-slate-600">Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Badge variant="outline" className="capitalize text-base px-3 py-1">
@@ -96,8 +123,7 @@ export default function ApplicationDetailPage() {
                   variant="outline"
                   size="sm"
                   className="capitalize"
-                  onClick={() => updateMutation.mutate(s)}
-                  disabled={updateMutation.isPending}
+                  onClick={() => handleStatusChange(s)}
                 >
                   {s.replace("_", " ")}
                 </Button>
@@ -106,14 +132,14 @@ export default function ApplicationDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Dates */}
-        <Card>
+        {/* Timeline */}
+        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-sm">Timeline</CardTitle>
+            <CardTitle className="text-sm text-slate-600">Timeline</CardTitle>
           </CardHeader>
           <CardContent className="text-sm space-y-2">
             <p>
-              <span className="text-muted-foreground">Created:</span>{" "}
+              <span className="text-muted-foreground">Saved:</span>{" "}
               {new Date(app.created_at).toLocaleDateString()}
             </p>
             {app.applied_at && (
@@ -128,34 +154,13 @@ export default function ApplicationDetailPage() {
             </p>
           </CardContent>
         </Card>
-
-        {/* AI Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">AI Assistant</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button
-              onClick={() => tailorMutation.mutate()}
-              disabled={tailorMutation.isPending}
-              className="w-full"
-            >
-              {tailorMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Sparkles className="h-4 w-4 mr-2" />
-              )}
-              Generate Cover Letter
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Job Description */}
-        <Card>
+        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
               <FileText className="h-4 w-4" />
               Job Description
             </CardTitle>
@@ -167,68 +172,27 @@ export default function ApplicationDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Cover Letter */}
-        <Card>
+        {/* Notes */}
+        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2">
+            <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
               <FileText className="h-4 w-4" />
-              Cover Letter
+              Notes
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {coverLetter ? (
-              <p className="text-sm whitespace-pre-wrap">{coverLetter}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No cover letter yet. Click &quot;Generate Cover Letter&quot; to create one with AI.
-              </p>
-            )}
+          <CardContent className="space-y-3">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add notes about this application..."
+              className="w-full h-32 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <Button size="sm" onClick={handleNotesChange}>
+              Save Notes
+            </Button>
           </CardContent>
         </Card>
       </div>
-
-      {/* Resume Suggestions */}
-      {suggestions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Resume Suggestions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              {suggestions.map((s, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-muted-foreground">{i + 1}.</span>
-                  <span>{s}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Event Timeline */}
-      {app.events && app.events.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              {app.events.map((e) => (
-                <li key={e.id} className="flex gap-3 items-start">
-                  <span className="text-muted-foreground text-xs">
-                    {new Date(e.created_at).toLocaleDateString()}
-                  </span>
-                  <span className="capitalize">
-                    {e.event_type.replace("_", " ")}
-                    {e.new_value && `: ${e.new_value}`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

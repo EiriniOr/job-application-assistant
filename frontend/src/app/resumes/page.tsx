@@ -1,50 +1,54 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getResumes, uploadResume } from "@/lib/api";
-import { FileText, Upload, Loader2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { getStoredResumes, saveResume, deleteStoredResume } from "@/lib/storage";
+import type { Resume } from "@/lib/api";
+import { FileText, Upload, Loader2, Trash2 } from "lucide-react";
 
 export default function ResumesPage() {
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["resumes"],
-    queryFn: () => getResumes(),
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      setUploading(true);
-      setUploadError(null);
-      setUploadSuccess(false);
-      try {
-        return await uploadResume(file);
-      } finally {
-        setUploading(false);
-      }
-    },
-    onSuccess: () => {
-      setUploadSuccess(true);
-      queryClient.invalidateQueries({ queryKey: ["resumes"] });
-    },
-    onError: (err: Error) => {
-      console.error("[Resume] Upload failed:", err.message);
-      setUploadError(err.message);
-    },
-  });
+  // Load resumes from localStorage
+  useEffect(() => {
+    const stored = getStoredResumes();
+    setResumes(stored);
+    setIsLoading(false);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      uploadMutation.mutate(file);
+      setUploading(true);
+      setUploadSuccess(false);
+
+      // Simulate brief delay for UX
+      setTimeout(() => {
+        const newResume = saveResume(file.name);
+        setResumes((prev) => [...prev.map(r => ({ ...r, is_primary: false })), newResume]);
+        setUploading(false);
+        setUploadSuccess(true);
+
+        // Clear success after 3 seconds
+        setTimeout(() => setUploadSuccess(false), 3000);
+      }, 500);
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Delete this resume?")) {
+      deleteStoredResume(id);
+      setResumes((prev) => prev.filter((r) => r.id !== id));
     }
   };
 
@@ -56,7 +60,7 @@ export default function ResumesPage() {
             Resumes
           </h1>
           <p className="text-slate-500 mt-1">
-            Upload and manage your resumes for AI-powered matching
+            Upload and manage your resumes for job applications
           </p>
         </div>
         <div>
@@ -82,11 +86,6 @@ export default function ResumesPage() {
         </div>
       </div>
 
-      {uploadError && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-          Upload failed: {uploadError}
-        </div>
-      )}
       {uploadSuccess && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700">
           Resume uploaded successfully!
@@ -97,9 +96,9 @@ export default function ResumesPage() {
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
         </div>
-      ) : data && data.resumes.length > 0 ? (
+      ) : resumes.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data.resumes.map((resume) => (
+          {resumes.map((resume) => (
             <Card key={resume.id} className="border-0 shadow-md bg-white/90 backdrop-blur">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
@@ -114,10 +113,18 @@ export default function ResumesPage() {
                   )}
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex items-center justify-between">
                 <p className="text-sm text-slate-500">
                   Uploaded {new Date(resume.created_at).toLocaleDateString()}
                 </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(resume.id)}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -131,7 +138,7 @@ export default function ResumesPage() {
             <div>
               <h3 className="font-semibold text-slate-800">No resumes yet</h3>
               <p className="text-sm text-slate-500">
-                Upload a PDF or DOCX resume to enable AI matching
+                Upload a PDF or DOCX resume to track your applications
               </p>
             </div>
             <Button
