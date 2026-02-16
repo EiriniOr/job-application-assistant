@@ -15,12 +15,18 @@ export default function JobsPage() {
   const [matchScores, setMatchScores] = useState<Record<string, MatchScore>>({});
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const searchMutation = useMutation({
     mutationFn: () => searchJobs({ keywords, location, remote_only: remoteOnly }),
     onSuccess: (data) => {
       setSearchResults(data.jobs);
+      setHasSearched(true);
+      setError(null);
+    },
+    onError: (err: Error) => {
+      setError(err.message);
       setHasSearched(true);
     },
   });
@@ -106,6 +112,10 @@ export default function JobsPage() {
       {isSearching ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-12 text-red-500">
+          Error: {error}
         </div>
       ) : searchResults.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
