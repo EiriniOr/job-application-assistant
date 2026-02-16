@@ -40,7 +40,7 @@ export const getApplications = (status?: string) =>
     `/api/applications${status ? `?status=${status}` : ""}`
   );
 
-export const createApplication = (job: { id?: string; source_id?: string; title: string; company: string; description?: string | null }) =>
+export const createApplication = (job: { id?: string | null; source_id?: string | null; title: string; company: string; description?: string | null }) =>
   fetcher<Application>("/api/applications", {
     method: "POST",
     body: JSON.stringify({
