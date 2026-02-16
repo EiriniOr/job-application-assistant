@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,11 @@ export default function JobsPage() {
   };
 
   const isSearching = searchMutation.isPending || aiSearchMutation.isPending;
+
+  // Auto-search on page load
+  useEffect(() => {
+    searchMutation.mutate();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6">
