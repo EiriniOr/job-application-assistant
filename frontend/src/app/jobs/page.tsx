@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/job-card";
-import { searchJobs, getJobs, createApplication, runAgent, type MatchScore } from "@/lib/api";
+import { searchJobs, createApplication, runAgent, type Job, type MatchScore } from "@/lib/api";
 import { Search, Loader2, Sparkles } from "lucide-react";
 
 export default function JobsPage() {
@@ -13,23 +13,26 @@ export default function JobsPage() {
   const [location, setLocation] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [matchScores, setMatchScores] = useState<Record<string, MatchScore>>({});
+  const [searchResults, setSearchResults] = useState<Job[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const queryClient = useQueryClient();
-
-  const { data: jobs, isLoading } = useQuery({
-    queryKey: ["jobs"],
-    queryFn: () => getJobs(),
-  });
 
   const searchMutation = useMutation({
     mutationFn: () => searchJobs({ keywords, location, remote_only: remoteOnly }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobs"] }),
+    onSuccess: (data) => {
+      setSearchResults(data.jobs);
+      setHasSearched(true);
+    },
   });
 
   const aiSearchMutation = useMutation({
     mutationFn: () =>
       runAgent("search_jobs", { keywords, location, remote_only: remoteOnly }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      if (data.result.jobs_found) {
+        setSearchResults(data.result.jobs_found);
+        setHasSearched(true);
+      }
       if (data.result.match_scores) {
         const scores: Record<string, MatchScore> = {};
         for (const m of data.result.match_scores) {
@@ -98,15 +101,15 @@ export default function JobsPage() {
       </div>
 
       {/* Results */}
-      {isLoading ? (
+      {isSearching ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : jobs && jobs.jobs.length > 0 ? (
+      ) : searchResults.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {jobs.jobs.map((job) => (
+          {searchResults.map((job, idx) => (
             <JobCard
-              key={job.id}
+              key={job.source_id || idx}
               job={job}
               matchScore={matchScores[job.id]}
               onSave={(id) => saveMutation.mutate(id)}
@@ -116,7 +119,7 @@ export default function JobsPage() {
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
-          No jobs found. Try searching for something!
+          {hasSearched ? "No jobs found for this search." : "Click Search to find jobs!"}
         </div>
       )}
     </div>
