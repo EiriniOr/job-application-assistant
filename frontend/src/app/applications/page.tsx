@@ -50,7 +50,7 @@ export default function ApplicationsPage() {
     <AuthGuard>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
             Applications
           </h1>
           <p className="text-muted-foreground mt-1">

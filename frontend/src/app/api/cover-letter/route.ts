@@ -16,27 +16,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prompt = `Generate a professional cover letter for a job application.
+    const prompt = `You are an expert career coach and ATS (Applicant Tracking System) optimization specialist. Generate a highly effective cover letter for a job application in Sweden.
 
-Job Details:
+JOB DETAILS:
 - Position: ${jobTitle}
 - Company: ${company}
-- Description: ${jobDescription || "Not provided"}
+- Job Description: ${jobDescription || "Not provided"}
 
-${resumeInfo ? `Applicant's Resume/Background:\n${resumeInfo}` : ""}
+${resumeInfo ? `APPLICANT'S RESUME/BACKGROUND:\n${resumeInfo}` : "No resume provided - write a general but compelling letter."}
 
-Write a compelling, personalized cover letter that:
-1. Shows enthusiasm for the specific role and company
-2. Highlights relevant skills and experience
-3. Explains why the candidate is a good fit
-4. Is professional but not overly formal
-5. Is about 3-4 paragraphs
+CRITICAL REQUIREMENTS:
 
-Return ONLY the cover letter text, no additional commentary.`;
+1. OPENING: Start with "Hej!" (Swedish greeting) - this creates a friendly, culturally appropriate tone for Swedish job market.
+
+2. ATS OPTIMIZATION:
+   - Extract and naturally incorporate keywords from the job description
+   - Include specific skills, technologies, and qualifications mentioned in the ad
+   - Use industry-standard terminology that ATS systems recognize
+   - Avoid tables, headers, or special formatting that confuse ATS
+
+3. STRENGTHS MATCHING:
+   - Analyze the job requirements and identify the TOP 3-5 most important qualifications
+   - For each key requirement, provide a specific example from the resume showing how the candidate meets it
+   - Use the STAR method implicitly (Situation, Task, Action, Result) for achievements
+   - Quantify achievements where possible (%, numbers, scale)
+
+4. STRUCTURE (3-4 paragraphs):
+   - Para 1: Enthusiastic opening with "Hej!", state the position, express genuine interest in the company
+   - Para 2: Key strengths matched to job requirements with specific examples
+   - Para 3: Additional relevant skills/experience, cultural fit, what you bring to the team
+   - Para 4: Strong closing with call to action, availability to discuss further
+
+5. TONE:
+   - Professional but warm and personable (Swedish work culture values humility and collaboration)
+   - Confident without being arrogant
+   - Show genuine enthusiasm, not generic phrases
+   - Avoid clichés like "passionate self-starter" or "think outside the box"
+
+6. LENGTH: 250-350 words (optimal for both human readers and ATS)
+
+Return ONLY the cover letter text, ready to copy and use. No additional commentary, headers, or explanations.`;
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+      max_tokens: 1500,
       messages: [
         {
           role: "user",

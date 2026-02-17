@@ -45,7 +45,7 @@ export default function ResumesPage() {
     <AuthGuard>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
             Resume
           </h1>
           <p className="text-slate-500 mt-1">
@@ -69,13 +69,13 @@ export default function ResumesPage() {
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
               placeholder="Paste your resume content here (skills, experience, education, etc.)..."
-              className="w-full h-64 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-64 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
             <div className="flex items-center gap-3">
               <Button
                 onClick={handleSaveResumeText}
                 disabled={saving}
-                className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+                className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />

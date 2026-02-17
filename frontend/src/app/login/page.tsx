@@ -34,7 +34,7 @@ export default function LoginPage() {
     <div className="min-h-[60vh] flex items-center justify-center">
       <Card className="w-full max-w-md border-0 shadow-xl bg-white/90 backdrop-blur">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
             Welcome Back
           </CardTitle>
           <p className="text-sm text-slate-500 mt-2">
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+              className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
               disabled={loading}
             >
               {loading ? (

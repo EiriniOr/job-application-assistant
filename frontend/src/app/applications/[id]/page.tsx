@@ -150,7 +150,7 @@ export default function ApplicationDetailPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
                 {app.job_title}
               </h1>
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -237,7 +237,7 @@ export default function ApplicationDetailPage() {
                 size="sm"
                 onClick={handleGenerateCoverLetter}
                 disabled={isGenerating}
-                className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+                className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
               >
                 {isGenerating ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -296,7 +296,7 @@ export default function ApplicationDetailPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add notes about this application..."
-                className="w-full h-32 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full h-32 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-pink-500"
               />
               <Button size="sm" onClick={handleNotesChange}>
                 Save Notes
