@@ -9,21 +9,22 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
+  useDraggable,
+  DragOverEvent,
 } from "@dnd-kit/core";
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2 } from "lucide-react";
 import type { Application } from "@/lib/api";
 
 const COLUMNS = [
-  { id: "saved", title: "Saved", color: "bg-slate-100" },
-  { id: "applied", title: "Applied", color: "bg-blue-100" },
-  { id: "phone_screen", title: "Phone Screen", color: "bg-purple-100" },
-  { id: "interview", title: "Interview", color: "bg-amber-100" },
-  { id: "offer", title: "Offer", color: "bg-green-100" },
-  { id: "rejected", title: "Rejected", color: "bg-red-100" },
+  { id: "saved", title: "Saved", color: "bg-slate-100", hoverColor: "bg-slate-200" },
+  { id: "applied", title: "Applied", color: "bg-blue-100", hoverColor: "bg-blue-200" },
+  { id: "phone_screen", title: "Phone Screen", color: "bg-purple-100", hoverColor: "bg-purple-200" },
+  { id: "interview", title: "Interview", color: "bg-amber-100", hoverColor: "bg-amber-200" },
+  { id: "offer", title: "Offer", color: "bg-green-100", hoverColor: "bg-green-200" },
+  { id: "rejected", title: "Rejected", color: "bg-red-100", hoverColor: "bg-red-200" },
 ];
 
 interface KanbanBoardProps {
@@ -32,23 +33,34 @@ interface KanbanBoardProps {
   onCardClick: (id: string) => void;
 }
 
-function ApplicationCard({ app, onClick }: { app: Application; onClick: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+function DraggableCard({
+  app,
+  onClick,
+}: {
+  app: Application;
+  onClick: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: app.id,
-    data: { app },
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        opacity: isDragging ? 0.5 : 1,
+      }
+    : undefined;
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <Card
-        className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
-        onClick={onClick}
+        className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow bg-white"
+        onClick={(e) => {
+          // Only trigger click if not dragging
+          if (!isDragging) {
+            onClick();
+          }
+        }}
       >
         <CardContent className="p-3 space-y-1">
           <p className="font-medium text-sm line-clamp-1">{app.job_title}</p>
@@ -67,9 +79,58 @@ function ApplicationCard({ app, onClick }: { app: Application; onClick: () => vo
   );
 }
 
+function DroppableColumn({
+  id,
+  title,
+  color,
+  hoverColor,
+  applications,
+  isOver,
+  onCardClick,
+}: {
+  id: string;
+  title: string;
+  color: string;
+  hoverColor: string;
+  applications: Application[];
+  isOver: boolean;
+  onCardClick: (id: string) => void;
+}) {
+  const { setNodeRef } = useDroppable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex-shrink-0 w-64 rounded-lg p-3 transition-colors ${isOver ? hoverColor : color}`}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-sm">{title}</h3>
+        <Badge variant="secondary" className="text-xs">
+          {applications.length}
+        </Badge>
+      </div>
+      <div className="space-y-2 min-h-[100px]">
+        {applications.map((app) => (
+          <DraggableCard
+            key={app.id}
+            app={app}
+            onClick={() => onCardClick(app.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function KanbanBoard({ applications, onStatusChange, onCardClick }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [overId, setOverId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
 
   const byStatus = COLUMNS.reduce(
     (acc, col) => {
@@ -83,9 +144,15 @@ export function KanbanBoard({ applications, onStatusChange, onCardClick }: Kanba
     setActiveId(event.active.id as string);
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    setOverId(event.over?.id as string | null);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
     const { active, over } = event;
+    setActiveId(null);
+    setOverId(null);
+
     if (!over) return;
 
     const appId = active.id as string;
@@ -103,40 +170,29 @@ export function KanbanBoard({ applications, onStatusChange, onCardClick }: Kanba
   const activeApp = applications.find((a) => a.id === activeId);
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
       <div className="flex gap-4 overflow-x-auto pb-4">
         {COLUMNS.map((col) => (
-          <div
+          <DroppableColumn
             key={col.id}
             id={col.id}
-            className={`flex-shrink-0 w-64 rounded-lg p-3 ${col.color}`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm">{col.title}</h3>
-              <Badge variant="secondary" className="text-xs">
-                {byStatus[col.id]?.length || 0}
-              </Badge>
-            </div>
-            <SortableContext
-              items={byStatus[col.id]?.map((a) => a.id) || []}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2 min-h-[100px]">
-                {byStatus[col.id]?.map((app) => (
-                  <ApplicationCard
-                    key={app.id}
-                    app={app}
-                    onClick={() => onCardClick(app.id)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </div>
+            title={col.title}
+            color={col.color}
+            hoverColor={col.hoverColor}
+            applications={byStatus[col.id] || []}
+            isOver={overId === col.id}
+            onCardClick={onCardClick}
+          />
         ))}
       </div>
       <DragOverlay>
         {activeApp ? (
-          <Card className="w-60 shadow-lg">
+          <Card className="w-60 shadow-lg rotate-3 bg-white">
             <CardContent className="p-3">
               <p className="font-medium text-sm">{activeApp.job_title}</p>
               <p className="text-xs text-muted-foreground">{activeApp.company}</p>
