@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getStoredResumes, saveResume, deleteStoredResume } from "@/lib/storage";
+import { getStoredResumes, saveResume, deleteStoredResume, getResumeContent, saveResumeContent } from "@/lib/storage";
 import type { Resume } from "@/lib/api";
-import { FileText, Upload, Loader2, Trash2 } from "lucide-react";
+import { FileText, Upload, Loader2, Trash2, Save, Sparkles } from "lucide-react";
 
 export default function ResumesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -14,13 +14,22 @@ export default function ResumesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [resumeText, setResumeText] = useState("");
+  const [textSaved, setTextSaved] = useState(false);
 
-  // Load resumes from localStorage
+  // Load resumes and resume content from localStorage
   useEffect(() => {
     const stored = getStoredResumes();
     setResumes(stored);
+    setResumeText(getResumeContent());
     setIsLoading(false);
   }, []);
+
+  const handleSaveResumeText = () => {
+    saveResumeContent(resumeText);
+    setTextSaved(true);
+    setTimeout(() => setTextSaved(false), 2000);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,6 +100,39 @@ export default function ResumesPage() {
           Resume uploaded successfully!
         </div>
       )}
+
+      {/* Resume Content for AI */}
+      <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+            <Sparkles className="h-4 w-4" />
+            Resume Content for AI Cover Letters
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-slate-500">
+            Paste your resume content below. This text will be used to generate personalized cover letters.
+          </p>
+          <textarea
+            value={resumeText}
+            onChange={(e) => setResumeText(e.target.value)}
+            placeholder="Paste your resume content here (skills, experience, education, etc.)..."
+            className="w-full h-48 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleSaveResumeText}
+              className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save Resume Content
+            </Button>
+            {textSaved && (
+              <span className="text-sm text-emerald-600">Saved!</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {isLoading ? (
         <div className="flex justify-center py-12">

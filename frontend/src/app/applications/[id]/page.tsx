@@ -4,9 +4,9 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getStoredApplication, updateStoredApplication } from "@/lib/storage";
+import { getStoredApplication, updateStoredApplication, getResumeContent } from "@/lib/storage";
 import type { Application } from "@/lib/api";
-import { ArrowLeft, Building2, Loader2, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const STATUSES = [
@@ -25,6 +25,9 @@ export default function ApplicationDetailPage() {
   const [app, setApp] = useState<Application | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notes, setNotes] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Load application from localStorage
   useEffect(() => {
@@ -61,6 +64,52 @@ export default function ApplicationDetailPage() {
       const filtered = apps.filter((a: Application) => a.id !== id);
       localStorage.setItem("job_assistant_applications", JSON.stringify(filtered));
       router.push("/applications");
+    }
+  };
+
+  const handleGenerateCoverLetter = async () => {
+    if (!app) return;
+
+    setIsGenerating(true);
+    setGenerateError(null);
+
+    try {
+      const resumeContent = getResumeContent();
+
+      const response = await fetch("/api/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: app.job_title,
+          company: app.company,
+          jobDescription: app.job_description,
+          resumeInfo: resumeContent,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate cover letter");
+      }
+
+      // Save cover letter to application
+      const updated = updateStoredApplication(id, { cover_letter: data.coverLetter });
+      if (updated) {
+        setApp(updated);
+      }
+    } catch (error) {
+      setGenerateError(error instanceof Error ? error.message : "Unknown error");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyCoverLetter = () => {
+    if (app?.cover_letter) {
+      navigator.clipboard.writeText(app.cover_letter);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -155,6 +204,58 @@ export default function ApplicationDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Cover Letter Section */}
+      <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+            <Sparkles className="h-4 w-4" />
+            AI Cover Letter
+          </CardTitle>
+          <div className="flex gap-2">
+            {app.cover_letter && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyCoverLetter}
+              >
+                {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                {copied ? "Copied!" : "Copy"}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={handleGenerateCoverLetter}
+              disabled={isGenerating}
+              className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              {app.cover_letter ? "Regenerate" : "Generate"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {generateError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {generateError}
+            </div>
+          )}
+          {app.cover_letter ? (
+            <div className="prose prose-sm max-w-none">
+              <p className="whitespace-pre-wrap text-slate-700">{app.cover_letter}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Click &quot;Generate&quot; to create a personalized cover letter using AI.
+              {getResumeContent() ? " Your resume will be used to tailor the letter." : " Add your resume info in the Resumes page for better results."}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Job Description */}

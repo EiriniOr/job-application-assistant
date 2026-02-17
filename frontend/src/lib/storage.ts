@@ -117,3 +117,15 @@ export function deleteStoredResume(id: string): boolean {
   localStorage.setItem(STORAGE_KEYS.RESUMES, JSON.stringify(filtered));
   return true;
 }
+
+// Resume content (for cover letter generation)
+const RESUME_CONTENT_KEY = "job_assistant_resume_content";
+
+export function getResumeContent(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(RESUME_CONTENT_KEY) || "";
+}
+
+export function saveResumeContent(content: string): void {
+  localStorage.setItem(RESUME_CONTENT_KEY, content);
+}
