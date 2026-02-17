@@ -21,11 +21,9 @@ async function searchArbetsformedlingen(
   location: string,
   limit: number
 ): Promise<Job[]> {
-  let url = `https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(keywords)}&limit=${limit}`;
-
-  if (location) {
-    url += `&municipality=${encodeURIComponent(location)}`;
-  }
+  // Include location in the search query for free-text search
+  const searchQuery = location ? `${keywords} ${location}` : keywords;
+  const url = `https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}&limit=${limit}`;
 
   try {
     const resp = await fetch(url, {
@@ -76,8 +74,14 @@ async function searchJSearch(
     return [];
   }
 
+  // Build query with location
   const query = location ? `${keywords} in ${location}` : keywords;
-  const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1`;
+  let url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1`;
+
+  // Also add location as separate parameter for better filtering
+  if (location) {
+    url += `&location=${encodeURIComponent(location)}`;
+  }
 
   try {
     const resp = await fetch(url, {
