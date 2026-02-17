@@ -19,12 +19,12 @@ import { Building2 } from "lucide-react";
 import type { Application } from "@/lib/api";
 
 const COLUMNS = [
-  { id: "saved", title: "Saved", color: "bg-slate-100", hoverColor: "bg-slate-200" },
-  { id: "applied", title: "Applied", color: "bg-blue-100", hoverColor: "bg-blue-200" },
-  { id: "phone_screen", title: "Phone Screen", color: "bg-purple-100", hoverColor: "bg-purple-200" },
-  { id: "interview", title: "Interview", color: "bg-amber-100", hoverColor: "bg-amber-200" },
-  { id: "offer", title: "Offer", color: "bg-green-100", hoverColor: "bg-green-200" },
-  { id: "rejected", title: "Rejected", color: "bg-red-100", hoverColor: "bg-red-200" },
+  { id: "saved", title: "Saved", color: "bg-slate-800/50 border border-slate-600/30", hoverColor: "bg-slate-700/50 border border-slate-500/40" },
+  { id: "applied", title: "Applied", color: "bg-violet-900/30 border border-violet-500/30", hoverColor: "bg-violet-800/40 border border-violet-400/40" },
+  { id: "phone_screen", title: "Phone Screen", color: "bg-fuchsia-900/30 border border-fuchsia-500/30", hoverColor: "bg-fuchsia-800/40 border border-fuchsia-400/40" },
+  { id: "interview", title: "Interview", color: "bg-cyan-900/30 border border-cyan-500/30", hoverColor: "bg-cyan-800/40 border border-cyan-400/40" },
+  { id: "offer", title: "Offer", color: "bg-emerald-900/30 border border-emerald-500/30", hoverColor: "bg-emerald-800/40 border border-emerald-400/40" },
+  { id: "rejected", title: "Rejected", color: "bg-red-900/30 border border-red-500/30", hoverColor: "bg-red-800/40 border border-red-400/40" },
 ];
 
 interface KanbanBoardProps {
@@ -54,7 +54,7 @@ function DraggableCard({
   return (
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       <Card
-        className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow bg-white"
+        className="cursor-grab active:cursor-grabbing hover:shadow-md hover:shadow-purple-500/20 transition-shadow bg-slate-900 border border-purple-500/20"
         onClick={(e) => {
           // Only trigger click if not dragging
           if (!isDragging) {
@@ -63,13 +63,13 @@ function DraggableCard({
         }}
       >
         <CardContent className="p-3 space-y-1">
-          <p className="font-medium text-sm line-clamp-1">{app.job_title}</p>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <p className="font-medium text-sm line-clamp-1 text-white">{app.job_title}</p>
+          <div className="flex items-center gap-1 text-xs text-purple-300">
             <Building2 className="h-3 w-3" />
             <span>{app.company}</span>
           </div>
           {app.applied_at && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-purple-400">
               Applied {new Date(app.applied_at).toLocaleDateString()}
             </p>
           )}
@@ -104,8 +104,8 @@ function DroppableColumn({
       className={`flex-shrink-0 w-64 rounded-lg p-3 transition-colors ${isOver ? hoverColor : color}`}
     >
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-sm">{title}</h3>
-        <Badge variant="secondary" className="text-xs">
+        <h3 className="font-semibold text-sm text-white">{title}</h3>
+        <Badge variant="secondary" className="text-xs bg-purple-500/30 text-purple-200 border-0">
           {applications.length}
         </Badge>
       </div>
@@ -192,10 +192,10 @@ export function KanbanBoard({ applications, onStatusChange, onCardClick }: Kanba
       </div>
       <DragOverlay>
         {activeApp ? (
-          <Card className="w-60 shadow-lg rotate-3 bg-white">
+          <Card className="w-60 shadow-lg shadow-purple-500/30 rotate-3 bg-slate-900 border border-fuchsia-500/50">
             <CardContent className="p-3">
-              <p className="font-medium text-sm">{activeApp.job_title}</p>
-              <p className="text-xs text-muted-foreground">{activeApp.company}</p>
+              <p className="font-medium text-sm text-white">{activeApp.job_title}</p>
+              <p className="text-xs text-purple-300">{activeApp.company}</p>
             </CardContent>
           </Card>
         ) : null}

@@ -32,46 +32,46 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
-      <Card className="w-full max-w-md border-0 shadow-xl bg-white/90 backdrop-blur">
+      <Card className="w-full max-w-md border border-purple-500/30 shadow-xl shadow-purple-500/20 bg-slate-900/80 backdrop-blur">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
             Welcome Back
           </CardTitle>
-          <p className="text-sm text-slate-500 mt-2">
+          <p className="text-sm text-purple-300 mt-2">
             Sign in to continue to your dashboard
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-300 text-sm">
                 {error}
               </div>
             )}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Email</label>
+              <label className="text-sm font-medium text-purple-200">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
                 <Input
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-slate-800/50 border-purple-500/30 text-white placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
                   required
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Password</label>
+              <label className="text-sm font-medium text-purple-200">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400" />
                 <Input
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-slate-800/50 border-purple-500/30 text-white placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
                   required
                   minLength={6}
                 />
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+              className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
               disabled={loading}
             >
               {loading ? (
@@ -91,7 +91,7 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-6 text-center">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-purple-400">
               This app is invite-only. Contact the admin for access.
             </p>
           </div>

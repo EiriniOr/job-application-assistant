@@ -102,7 +102,7 @@ export default function Dashboard() {
   if (authLoading || isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
       </div>
     );
   }
@@ -110,19 +110,23 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-8 text-white shadow-2xl">
-        {/* Animated background shapes */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 p-8 text-white shadow-2xl border border-purple-400/20">
+        {/* Animated background shapes - stars effect */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-300/30 rounded-full blur-2xl animate-pulse" />
-          <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-pink-300/20 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-purple-300/20 rounded-full blur-2xl" />
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-400/30 rounded-full blur-2xl animate-pulse" />
+          <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-fuchsia-400/20 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-pink-400/20 rounded-full blur-2xl" />
+          {/* Stars */}
+          <div className="absolute top-4 left-1/4 w-1 h-1 bg-white rounded-full animate-pulse" />
+          <div className="absolute top-8 right-1/3 w-1.5 h-1.5 bg-white rounded-full animate-pulse delay-100" />
+          <div className="absolute bottom-12 left-1/3 w-1 h-1 bg-white rounded-full animate-pulse delay-200" />
         </div>
 
         <div className="relative flex flex-col md:flex-row items-center gap-6">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-6 w-6 text-yellow-300" />
-              <span className="text-yellow-200 font-medium">Your job hunt companion</span>
+              <Sparkles className="h-6 w-6 text-cyan-300" />
+              <span className="text-cyan-200 font-medium">Your job hunt companion</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight">
               JobbaJobba
@@ -132,7 +136,7 @@ export default function Dashboard() {
             </p>
             {!user && (
               <Link href="/login">
-                <Button className="mt-6 bg-white text-pink-600 hover:bg-yellow-50 font-semibold px-6 py-3 text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+                <Button className="mt-6 bg-white text-purple-600 hover:bg-cyan-50 font-semibold px-6 py-3 text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
                   <Rocket className="h-5 w-5 mr-2" />
                   Get Started
                 </Button>
@@ -149,48 +153,48 @@ export default function Dashboard() {
         <>
           {/* Stats */}
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 hover:shadow-xl transition-shadow">
+            <Card className="border border-purple-500/20 shadow-lg bg-slate-900/50 backdrop-blur hover:shadow-xl hover:shadow-purple-500/10 transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-blue-700">Saved</CardTitle>
-                <div className="p-2 bg-blue-500 rounded-xl shadow-md">
+                <CardTitle className="text-sm font-medium text-purple-300">Saved</CardTitle>
+                <div className="p-2 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl shadow-md">
                   <Briefcase className="h-4 w-4 text-white" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-black text-blue-900">{counts.saved}</div>
+                <div className="text-4xl font-black text-white">{counts.saved}</div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-violet-50 to-violet-100/50 hover:shadow-xl transition-shadow">
+            <Card className="border border-purple-500/20 shadow-lg bg-slate-900/50 backdrop-blur hover:shadow-xl hover:shadow-fuchsia-500/10 transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-violet-700">Applied</CardTitle>
-                <div className="p-2 bg-violet-500 rounded-xl shadow-md">
+                <CardTitle className="text-sm font-medium text-fuchsia-300">Applied</CardTitle>
+                <div className="p-2 bg-gradient-to-r from-fuchsia-500 to-pink-500 rounded-xl shadow-md">
                   <FileText className="h-4 w-4 text-white" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-black text-violet-900">{counts.applied}</div>
+                <div className="text-4xl font-black text-white">{counts.applied}</div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-amber-100/50 hover:shadow-xl transition-shadow">
+            <Card className="border border-purple-500/20 shadow-lg bg-slate-900/50 backdrop-blur hover:shadow-xl hover:shadow-cyan-500/10 transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-amber-700">Interviews</CardTitle>
-                <div className="p-2 bg-amber-500 rounded-xl shadow-md">
+                <CardTitle className="text-sm font-medium text-cyan-300">Interviews</CardTitle>
+                <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl shadow-md">
                   <Clock className="h-4 w-4 text-white" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-black text-amber-900">{counts.interview}</div>
+                <div className="text-4xl font-black text-white">{counts.interview}</div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-emerald-100/50 hover:shadow-xl transition-shadow">
+            <Card className="border border-purple-500/20 shadow-lg bg-slate-900/50 backdrop-blur hover:shadow-xl hover:shadow-emerald-500/10 transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-emerald-700">Offers</CardTitle>
-                <div className="p-2 bg-emerald-500 rounded-xl shadow-md">
+                <CardTitle className="text-sm font-medium text-emerald-300">Offers</CardTitle>
+                <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl shadow-md">
                   <Trophy className="h-4 w-4 text-white" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-black text-emerald-900">{counts.offer}</div>
+                <div className="text-4xl font-black text-white">{counts.offer}</div>
               </CardContent>
             </Card>
           </div>
@@ -198,30 +202,30 @@ export default function Dashboard() {
           {/* Quick Links */}
           <div className="grid gap-4 md:grid-cols-2">
             <Link href="/jobs">
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-pink-50 hover:-translate-y-1 group">
+              <Card className="border border-purple-500/20 shadow-lg hover:shadow-xl hover:shadow-purple-500/10 transition-all cursor-pointer bg-slate-900/50 backdrop-blur hover:-translate-y-1 group">
                 <CardHeader>
-                  <div className="p-3 bg-gradient-to-r from-orange-400 to-pink-500 rounded-xl w-fit shadow-md group-hover:scale-110 transition-transform">
+                  <div className="p-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-xl w-fit shadow-md group-hover:scale-110 transition-transform">
                     <Briefcase className="h-6 w-6 text-white" />
                   </div>
-                  <CardTitle className="text-slate-800 mt-2">Search Jobs</CardTitle>
+                  <CardTitle className="text-white mt-2">Search Jobs</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-purple-200">
                     Search Swedish jobs from Arbetsförmedlingen and international positions via LinkedIn/Indeed.
                   </p>
                 </CardContent>
               </Card>
             </Link>
             <Link href="/applications">
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-violet-50 to-purple-50 hover:-translate-y-1 group">
+              <Card className="border border-purple-500/20 shadow-lg hover:shadow-xl hover:shadow-fuchsia-500/10 transition-all cursor-pointer bg-slate-900/50 backdrop-blur hover:-translate-y-1 group">
                 <CardHeader>
-                  <div className="p-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl w-fit shadow-md group-hover:scale-110 transition-transform">
+                  <div className="p-3 bg-gradient-to-r from-fuchsia-500 to-pink-500 rounded-xl w-fit shadow-md group-hover:scale-110 transition-transform">
                     <FileText className="h-6 w-6 text-white" />
                   </div>
-                  <CardTitle className="text-slate-800 mt-2">Track Applications</CardTitle>
+                  <CardTitle className="text-white mt-2">Track Applications</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-purple-200">
                     Manage your application pipeline with drag-and-drop Kanban board.
                   </p>
                 </CardContent>
@@ -232,17 +236,17 @@ export default function Dashboard() {
           {/* Recent Applications */}
           {applications.length > 0 && (
             <div>
-              <h2 className="text-xl font-bold mb-4 text-slate-800">Recent Applications</h2>
+              <h2 className="text-xl font-bold mb-4 text-white">Recent Applications</h2>
               <div className="space-y-2">
                 {applications.slice(0, 5).map((app) => (
                   <Link key={app.id} href={`/applications/${app.id}`}>
-                    <Card className="hover:shadow-md transition-all border-0 bg-white/80 backdrop-blur hover:-translate-x-1">
+                    <Card className="hover:shadow-md hover:shadow-purple-500/10 transition-all border border-purple-500/20 bg-slate-900/50 backdrop-blur hover:-translate-x-1">
                       <CardContent className="p-4 flex items-center justify-between">
                         <div>
-                          <p className="font-semibold text-slate-800">{app.job_title}</p>
-                          <p className="text-sm text-slate-500">{app.company}</p>
+                          <p className="font-semibold text-white">{app.job_title}</p>
+                          <p className="text-sm text-purple-300">{app.company}</p>
                         </div>
-                        <Badge variant="outline" className="capitalize font-medium">
+                        <Badge variant="outline" className="capitalize font-medium border-purple-400/50 text-purple-200">
                           {app.status.replace("_", " ")}
                         </Badge>
                       </CardContent>
@@ -256,41 +260,41 @@ export default function Dashboard() {
       ) : (
         /* Not logged in - show features */
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all hover:-translate-y-1">
+          <Card className="border border-purple-500/20 shadow-lg bg-slate-900/50 backdrop-blur hover:shadow-xl hover:shadow-violet-500/10 transition-all hover:-translate-y-1">
             <CardHeader>
-              <div className="p-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl w-fit shadow-lg">
+              <div className="p-4 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl w-fit shadow-lg">
                 <Briefcase className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-slate-800 mt-3 text-xl">Search Jobs</CardTitle>
+              <CardTitle className="text-white mt-3 text-xl">Search Jobs</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-600">
+              <p className="text-purple-200">
                 Search thousands of jobs from Swedish job boards and international sites like LinkedIn and Indeed.
               </p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-violet-50 to-pink-50 hover:shadow-xl transition-all hover:-translate-y-1">
+          <Card className="border border-purple-500/20 shadow-lg bg-slate-900/50 backdrop-blur hover:shadow-xl hover:shadow-fuchsia-500/10 transition-all hover:-translate-y-1">
             <CardHeader>
-              <div className="p-4 bg-gradient-to-r from-violet-500 to-pink-500 rounded-2xl w-fit shadow-lg">
+              <div className="p-4 bg-gradient-to-r from-fuchsia-500 to-pink-500 rounded-2xl w-fit shadow-lg">
                 <FileText className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-slate-800 mt-3 text-xl">AI Cover Letters</CardTitle>
+              <CardTitle className="text-white mt-3 text-xl">AI Cover Letters</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-600">
+              <p className="text-purple-200">
                 Generate personalized cover letters using AI, tailored to each job based on your resume.
               </p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-teal-50 hover:shadow-xl transition-all hover:-translate-y-1">
+          <Card className="border border-purple-500/20 shadow-lg bg-slate-900/50 backdrop-blur hover:shadow-xl hover:shadow-cyan-500/10 transition-all hover:-translate-y-1">
             <CardHeader>
-              <div className="p-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl w-fit shadow-lg">
+              <div className="p-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-2xl w-fit shadow-lg">
                 <Trophy className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-slate-800 mt-3 text-xl">Track Progress</CardTitle>
+              <CardTitle className="text-white mt-3 text-xl">Track Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-600">
+              <p className="text-purple-200">
                 Use the Kanban board to track your applications from saved to offer.
               </p>
             </CardContent>

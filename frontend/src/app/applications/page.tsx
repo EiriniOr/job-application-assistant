@@ -40,7 +40,7 @@ export default function ApplicationsPage() {
     return (
       <AuthGuard>
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
         </div>
       </AuthGuard>
     );
@@ -50,18 +50,18 @@ export default function ApplicationsPage() {
     <AuthGuard>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
             Applications
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-purple-300 mt-1">
             Drag cards to update status. Click to view details.
           </p>
         </div>
 
         {applications.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-purple-300">
             <p>No saved applications yet.</p>
-            <p className="text-sm mt-2">Search for jobs and click &quot;Save&quot; to add them here.</p>
+            <p className="text-sm mt-2 text-purple-400">Search for jobs and click &quot;Save&quot; to add them here.</p>
           </div>
         ) : (
           <KanbanBoard

@@ -122,7 +122,7 @@ export default function ApplicationDetailPage() {
     return (
       <AuthGuard>
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
         </div>
       </AuthGuard>
     );
@@ -132,8 +132,8 @@ export default function ApplicationDetailPage() {
     return (
       <AuthGuard>
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Application not found</p>
-          <Button variant="link" onClick={() => router.push("/applications")}>
+          <p className="text-purple-300">Application not found</p>
+          <Button variant="link" className="text-fuchsia-400" onClick={() => router.push("/applications")}>
             Back to Applications
           </Button>
         </div>
@@ -146,20 +146,20 @@ export default function ApplicationDetailPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <Button variant="ghost" size="icon" className="text-purple-300 hover:text-white hover:bg-purple-500/20" onClick={() => router.back()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
                 {app.job_title}
               </h1>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-purple-300">
                 <Building2 className="h-4 w-4" />
                 <span>{app.company}</span>
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-red-700">
+          <Button variant="outline" size="sm" onClick={handleDelete} className="border-red-500/50 text-red-400 hover:text-red-300 hover:bg-red-500/20">
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
           </Button>
@@ -167,12 +167,12 @@ export default function ApplicationDetailPage() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Status */}
-          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+          <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-sm text-slate-600">Status</CardTitle>
+              <CardTitle className="text-sm text-purple-200">Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Badge variant="outline" className="capitalize text-base px-3 py-1">
+              <Badge variant="outline" className="capitalize text-base px-3 py-1 border-fuchsia-400/50 text-fuchsia-300">
                 {app.status.replace("_", " ")}
               </Badge>
               <div className="flex flex-wrap gap-2">
@@ -181,7 +181,7 @@ export default function ApplicationDetailPage() {
                     key={s}
                     variant="outline"
                     size="sm"
-                    className="capitalize"
+                    className="capitalize border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white"
                     onClick={() => handleStatusChange(s)}
                   >
                     {s.replace("_", " ")}
@@ -192,23 +192,23 @@ export default function ApplicationDetailPage() {
           </Card>
 
           {/* Timeline */}
-          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+          <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-sm text-slate-600">Timeline</CardTitle>
+              <CardTitle className="text-sm text-purple-200">Timeline</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm space-y-2">
+            <CardContent className="text-sm space-y-2 text-white">
               <p>
-                <span className="text-muted-foreground">Saved:</span>{" "}
+                <span className="text-purple-400">Saved:</span>{" "}
                 {new Date(app.created_at).toLocaleDateString()}
               </p>
               {app.applied_at && (
                 <p>
-                  <span className="text-muted-foreground">Applied:</span>{" "}
+                  <span className="text-purple-400">Applied:</span>{" "}
                   {new Date(app.applied_at).toLocaleDateString()}
                 </p>
               )}
               <p>
-                <span className="text-muted-foreground">Updated:</span>{" "}
+                <span className="text-purple-400">Updated:</span>{" "}
                 {new Date(app.updated_at).toLocaleDateString()}
               </p>
             </CardContent>
@@ -216,10 +216,10 @@ export default function ApplicationDetailPage() {
         </div>
 
         {/* Cover Letter Section */}
-        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+        <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
-              <Sparkles className="h-4 w-4" />
+            <CardTitle className="text-sm flex items-center gap-2 text-purple-200">
+              <Sparkles className="h-4 w-4 text-fuchsia-400" />
               AI Cover Letter
             </CardTitle>
             <div className="flex gap-2">
@@ -227,6 +227,7 @@ export default function ApplicationDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white"
                   onClick={handleCopyCoverLetter}
                 >
                   {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
@@ -237,7 +238,7 @@ export default function ApplicationDetailPage() {
                 size="sm"
                 onClick={handleGenerateCoverLetter}
                 disabled={isGenerating}
-                className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+                className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
               >
                 {isGenerating ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -250,16 +251,16 @@ export default function ApplicationDetailPage() {
           </CardHeader>
           <CardContent>
             {generateError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg text-red-300 text-sm">
                 {generateError}
               </div>
             )}
             {app.cover_letter ? (
-              <div className="prose prose-sm max-w-none">
-                <p className="whitespace-pre-wrap text-slate-700">{app.cover_letter}</p>
+              <div className="prose prose-sm max-w-none prose-invert">
+                <p className="whitespace-pre-wrap text-purple-100">{app.cover_letter}</p>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-purple-300">
                 Click &quot;Generate&quot; to create a personalized cover letter using AI.
                 {resumeContent ? " Your resume will be used to tailor the letter." : " Add your resume info in the Resumes page for better results."}
               </p>
@@ -269,24 +270,24 @@ export default function ApplicationDetailPage() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Job Description */}
-          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+          <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+              <CardTitle className="text-sm flex items-center gap-2 text-purple-200">
                 <FileText className="h-4 w-4" />
                 Job Description
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+              <p className="text-sm text-purple-300 whitespace-pre-wrap">
                 {app.job_description || "No description available"}
               </p>
             </CardContent>
           </Card>
 
           {/* Notes */}
-          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+          <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+              <CardTitle className="text-sm flex items-center gap-2 text-purple-200">
                 <FileText className="h-4 w-4" />
                 Notes
               </CardTitle>
@@ -296,9 +297,13 @@ export default function ApplicationDetailPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add notes about this application..."
-                className="w-full h-32 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full h-32 p-3 text-sm bg-slate-800/50 border border-purple-500/30 rounded-lg resize-none text-white placeholder:text-purple-300/50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
               />
-              <Button size="sm" onClick={handleNotesChange}>
+              <Button
+                size="sm"
+                onClick={handleNotesChange}
+                className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
+              >
                 Save Notes
               </Button>
             </CardContent>

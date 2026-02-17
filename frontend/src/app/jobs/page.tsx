@@ -131,17 +131,17 @@ export default function JobsPage() {
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
               Search Jobs
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-purple-300 mt-1">
               Search jobs from multiple sources or add manually via URL
             </p>
           </div>
           <Button
             onClick={() => setShowAddModal(true)}
             variant="outline"
-            className="gap-2 border-pink-200 hover:bg-pink-50"
+            className="gap-2 border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white"
           >
             <Plus className="h-4 w-4" />
             Add Job via URL
@@ -156,8 +156,8 @@ export default function JobsPage() {
               onClick={() => toggleSource(source.id)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                 selectedSources.includes(source.id)
-                  ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-md shadow-purple-500/25"
+                  : "bg-slate-800/50 text-purple-200 hover:bg-slate-700/50 border border-purple-500/20"
               }`}
             >
               {selectedSources.includes(source.id) && (
@@ -168,15 +168,15 @@ export default function JobsPage() {
           ))}
 
           {/* Divider */}
-          <div className="w-px h-6 bg-slate-200 mx-2" />
+          <div className="w-px h-6 bg-purple-500/30 mx-2" />
 
           {/* English Only Toggle */}
           <button
             onClick={() => setEnglishOnly(!englishOnly)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
               englishOnly
-                ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/25"
+                : "bg-slate-800/50 text-purple-200 hover:bg-slate-700/50 border border-purple-500/20"
             }`}
           >
             <Globe className="h-3.5 w-3.5" />
@@ -191,20 +191,20 @@ export default function JobsPage() {
             placeholder="Keywords (e.g. python developer)"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
-            className="w-64 focus-visible:ring-pink-500"
+            className="w-64 bg-slate-900/50 border-purple-500/30 text-white placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
             onKeyDown={(e) => e.key === "Enter" && searchMutation.mutate()}
           />
           <Input
             placeholder="Location (optional)"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-48 focus-visible:ring-pink-500"
+            className="w-48 bg-slate-900/50 border-purple-500/30 text-white placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
             onKeyDown={(e) => e.key === "Enter" && searchMutation.mutate()}
           />
           <Button
             onClick={() => searchMutation.mutate()}
             disabled={isSearching || selectedSources.length === 0}
-            className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-md"
+            className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
           >
             {isSearching ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -218,10 +218,10 @@ export default function JobsPage() {
         {/* Results */}
         {isSearching ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-pink-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-fuchsia-400" />
           </div>
         ) : error ? (
-          <div className="text-center py-12 text-red-500">Error: {error}</div>
+          <div className="text-center py-12 text-red-400">Error: {error}</div>
         ) : searchResults.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {searchResults.map((job, idx) => (
@@ -235,7 +235,7 @@ export default function JobsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-purple-300">
             {hasSearched
               ? "No jobs found. Try different keywords or sources."
               : "Click Search to find jobs!"}
@@ -244,16 +244,17 @@ export default function JobsPage() {
 
         {/* Add Job Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-lg mx-4 border-0 shadow-2xl">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <Card className="w-full max-w-lg mx-4 border border-purple-500/30 shadow-2xl shadow-purple-500/20 bg-slate-900">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-slate-800">
-                  <Link2 className="h-5 w-5 text-pink-500" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Link2 className="h-5 w-5 text-fuchsia-400" />
                   Add Job via URL
                 </CardTitle>
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="text-purple-300 hover:text-white hover:bg-purple-500/20"
                   onClick={() => {
                     setShowAddModal(false);
                     setJobUrl("");
@@ -264,7 +265,7 @@ export default function JobsPage() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-purple-200">
                   Paste a job listing URL and we&apos;ll extract the details using AI.
                 </p>
                 <Input
@@ -272,14 +273,15 @@ export default function JobsPage() {
                   value={jobUrl}
                   onChange={(e) => setJobUrl(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleExtractAndSave()}
-                  className="focus-visible:ring-pink-500"
+                  className="bg-slate-800/50 border-purple-500/30 text-white placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
                 />
                 {extractError && (
-                  <p className="text-sm text-red-600">{extractError}</p>
+                  <p className="text-sm text-red-400">{extractError}</p>
                 )}
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
+                    className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white"
                     onClick={() => {
                       setShowAddModal(false);
                       setJobUrl("");
@@ -291,7 +293,7 @@ export default function JobsPage() {
                   <Button
                     onClick={handleExtractAndSave}
                     disabled={extracting || !jobUrl.trim()}
-                    className="bg-gradient-to-r from-orange-500 to-pink-500"
+                    className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
                   >
                     {extracting ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
