@@ -25,10 +25,34 @@ async function fetcher<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 // Jobs
-export const searchJobs = (params: { keywords: string; location?: string; remote_only?: boolean }) =>
-  fetcher<{ count: number; jobs: Job[] }>(
-    `/api/jobs/search?keywords=${encodeURIComponent(params.keywords)}&location=${params.location || ""}&remote_only=${params.remote_only || false}`
+export const searchJobs = (params: {
+  keywords: string;
+  location?: string;
+  sources?: string[];
+}) =>
+  fetcher<{ count: number; jobs: Job[]; sources: string[] }>(
+    `/api/jobs/search?keywords=${encodeURIComponent(params.keywords)}&location=${params.location || ""}&sources=${(params.sources || ["arbetsformedlingen"]).join(",")}`
   );
+
+export const extractJobFromUrl = (url: string) =>
+  fetcher<{
+    success: boolean;
+    title?: string;
+    company?: string;
+    location?: string;
+    description?: string;
+    salary_min?: number | null;
+    salary_max?: number | null;
+    is_remote?: boolean;
+    requirements?: string[];
+    url: string;
+    source: string;
+    source_id: string;
+    error?: string;
+  }>("/api/jobs/extract", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
 
 export const getJobs = () => fetcher<{ count: number; jobs: Job[] }>("/api/jobs");
 

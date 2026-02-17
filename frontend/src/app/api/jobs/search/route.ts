@@ -15,11 +15,17 @@ interface Job {
   tags?: string[];
 }
 
+// Arbetsförmedlingen (Swedish Public Employment Service) - FREE
 async function searchArbetsformedlingen(
   keywords: string,
+  location: string,
   limit: number
 ): Promise<Job[]> {
-  const url = `https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(keywords)}&limit=${limit}`;
+  let url = `https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(keywords)}&limit=${limit}`;
+
+  if (location) {
+    url += `&municipality=${encodeURIComponent(location)}`;
+  }
 
   try {
     const resp = await fetch(url, {
@@ -31,8 +37,7 @@ async function searchArbetsformedlingen(
 
     return (data.hits || []).map((hit: Record<string, unknown>) => {
       const workplace = (hit.workplace_address as Record<string, string>) || {};
-      const location =
-        workplace.city || workplace.municipality || "Sweden";
+      const loc = workplace.city || workplace.municipality || "Sweden";
 
       return {
         source: "arbetsformedlingen",
@@ -41,10 +46,10 @@ async function searchArbetsformedlingen(
         company: String(
           ((hit.employer as Record<string, string>)?.name as string) || "Unknown"
         ),
-        location,
+        location: loc,
         is_remote: Boolean(hit.remote_work),
         description: String(
-          ((hit.description as Record<string, string>)?.text || "").slice(0, 500)
+          ((hit.description as Record<string, string>)?.text || "").slice(0, 1000)
         ),
         salary_min: null,
         salary_max: null,
@@ -52,60 +57,102 @@ async function searchArbetsformedlingen(
         posted_at: String((hit.publication_date as string) || ""),
       };
     });
-  } catch {
+  } catch (e) {
+    console.error("Arbetsförmedlingen error:", e);
     return [];
   }
 }
 
-async function searchRemoteOK(tags: string, limit: number): Promise<Job[]> {
-  const url = `https://remoteok.com/api?tag=${encodeURIComponent(tags)}&limit=${limit}`;
+// JSearch API (RapidAPI) - FREE TIER: 500 req/month
+// Aggregates: LinkedIn, Indeed, Glassdoor, ZipRecruiter, etc.
+async function searchJSearch(
+  keywords: string,
+  location: string,
+  limit: number
+): Promise<Job[]> {
+  const apiKey = process.env.RAPIDAPI_KEY;
+  if (!apiKey) {
+    console.log("JSearch: No RAPIDAPI_KEY configured");
+    return [];
+  }
+
+  const query = location ? `${keywords} in ${location}` : keywords;
+  const url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1`;
 
   try {
     const resp = await fetch(url, {
-      headers: { "User-Agent": "job-assistant/1.0" },
-      next: { revalidate: 60 },
+      headers: {
+        "X-RapidAPI-Key": apiKey,
+        "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
+      },
+      next: { revalidate: 300 }, // Cache for 5 minutes
     });
-    if (!resp.ok) return [];
-    const data = await resp.json();
 
-    // First element is metadata, skip it
-    return data.slice(1, limit + 1).map((r: Record<string, unknown>) => ({
-      source: "remoteok",
-      source_id: String(r.id || ""),
-      title: String((r.position as string) || ""),
-      company: String((r.company as string) || "Unknown"),
-      location: "Remote",
-      is_remote: true,
-      description: String((r.description as string) || ""),
-      salary_min: r.salary_min ? Number(r.salary_min) : null,
-      salary_max: r.salary_max ? Number(r.salary_max) : null,
-      url: String((r.url as string) || ""),
-      posted_at: String((r.date as string) || ""),
-      tags: (r.tags as string[]) || [],
+    if (!resp.ok) {
+      console.error("JSearch error:", resp.status, resp.statusText);
+      return [];
+    }
+
+    const data = await resp.json();
+    const jobs = data.data || [];
+
+    return jobs.slice(0, limit).map((job: Record<string, unknown>) => ({
+      source: String(job.job_publisher || "jsearch"),
+      source_id: String(job.job_id || ""),
+      title: String(job.job_title || ""),
+      company: String(job.employer_name || "Unknown"),
+      location: String(job.job_city || job.job_country || "Remote"),
+      is_remote: Boolean(job.job_is_remote),
+      description: String(job.job_description || "").slice(0, 1000),
+      salary_min: job.job_min_salary ? Number(job.job_min_salary) : null,
+      salary_max: job.job_max_salary ? Number(job.job_max_salary) : null,
+      url: String(job.job_apply_link || ""),
+      posted_at: String(job.job_posted_at_datetime_utc || ""),
+      tags: job.job_required_skills as string[] || [],
     }));
-  } catch {
+  } catch (e) {
+    console.error("JSearch error:", e);
     return [];
   }
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const keywords = searchParams.get("keywords") || "python";
-  const remoteOnly = searchParams.get("remote_only") === "true";
+  const keywords = searchParams.get("keywords") || "developer";
+  const location = searchParams.get("location") || "";
+  const sources = searchParams.get("sources")?.split(",") || ["arbetsformedlingen", "jsearch"];
   const limit = parseInt(searchParams.get("limit") || "10", 10);
 
   const results: Job[] = [];
+  const errors: string[] = [];
 
-  // Arbetsförmedlingen (Swedish jobs) - skip if remote only
-  if (!remoteOnly) {
-    const afJobs = await searchArbetsformedlingen(keywords, limit);
-    results.push(...afJobs);
+  // Search selected sources in parallel
+  const searches: Promise<Job[]>[] = [];
+
+  if (sources.includes("arbetsformedlingen")) {
+    searches.push(searchArbetsformedlingen(keywords, location, limit));
   }
 
-  // RemoteOK (remote/tech jobs)
-  const tag = keywords.split(" ")[0].toLowerCase();
-  const remoteJobs = await searchRemoteOK(tag, limit);
-  results.push(...remoteJobs);
+  if (sources.includes("jsearch")) {
+    searches.push(searchJSearch(keywords, location, limit));
+  }
 
-  return NextResponse.json({ count: results.length, jobs: results });
+  const searchResults = await Promise.all(searches);
+  for (const jobs of searchResults) {
+    results.push(...jobs);
+  }
+
+  // Sort by posted date (newest first)
+  results.sort((a, b) => {
+    const dateA = new Date(a.posted_at || 0).getTime();
+    const dateB = new Date(b.posted_at || 0).getTime();
+    return dateB - dateA;
+  });
+
+  return NextResponse.json({
+    count: results.length,
+    jobs: results,
+    sources: sources,
+    errors: errors.length > 0 ? errors : undefined,
+  });
 }
