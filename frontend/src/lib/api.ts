@@ -29,9 +29,10 @@ export const searchJobs = (params: {
   keywords: string;
   location?: string;
   sources?: string[];
+  englishOnly?: boolean;
 }) =>
   fetcher<{ count: number; jobs: Job[]; sources: string[] }>(
-    `/api/jobs/search?keywords=${encodeURIComponent(params.keywords)}&location=${params.location || ""}&sources=${(params.sources || ["arbetsformedlingen"]).join(",")}`
+    `/api/jobs/search?keywords=${encodeURIComponent(params.keywords)}&location=${params.location || ""}&sources=${(params.sources || ["arbetsformedlingen"]).join(",")}&englishOnly=${params.englishOnly || false}`
   );
 
 export const extractJobFromUrl = (url: string) =>

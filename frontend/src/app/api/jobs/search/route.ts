@@ -19,10 +19,14 @@ interface Job {
 async function searchArbetsformedlingen(
   keywords: string,
   location: string,
-  limit: number
+  limit: number,
+  englishOnly: boolean
 ): Promise<Job[]> {
-  // Include location in the search query for free-text search
-  const searchQuery = location ? `${keywords} ${location}` : keywords;
+  // Include location and language preference in the search query
+  let searchQuery = location ? `${keywords} ${location}` : keywords;
+  if (englishOnly) {
+    searchQuery += " english";
+  }
   const url = `https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}&limit=${limit}`;
 
   try {
@@ -66,7 +70,8 @@ async function searchArbetsformedlingen(
 async function searchJSearch(
   keywords: string,
   location: string,
-  limit: number
+  limit: number,
+  englishOnly: boolean
 ): Promise<Job[]> {
   const apiKey = process.env.RAPIDAPI_KEY;
   if (!apiKey) {
@@ -75,7 +80,10 @@ async function searchJSearch(
   }
 
   // Build query with location
-  const query = location ? `${keywords} in ${location}` : keywords;
+  let query = location ? `${keywords} in ${location}` : keywords;
+  if (englishOnly) {
+    query += " english";
+  }
   let url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1`;
 
   // Also add location as separate parameter for better filtering
@@ -126,6 +134,7 @@ export async function GET(request: NextRequest) {
   const location = searchParams.get("location") || "";
   const sources = searchParams.get("sources")?.split(",") || ["arbetsformedlingen", "jsearch"];
   const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const englishOnly = searchParams.get("englishOnly") === "true";
 
   const results: Job[] = [];
   const errors: string[] = [];
@@ -134,11 +143,11 @@ export async function GET(request: NextRequest) {
   const searches: Promise<Job[]>[] = [];
 
   if (sources.includes("arbetsformedlingen")) {
-    searches.push(searchArbetsformedlingen(keywords, location, limit));
+    searches.push(searchArbetsformedlingen(keywords, location, limit, englishOnly));
   }
 
   if (sources.includes("jsearch")) {
-    searches.push(searchJSearch(keywords, location, limit));
+    searches.push(searchJSearch(keywords, location, limit, englishOnly));
   }
 
   const searchResults = await Promise.all(searches);
