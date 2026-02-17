@@ -5,8 +5,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/job-card";
+import { AuthGuard } from "@/components/auth-guard";
 import { searchJobs, runAgent, type Job, type MatchScore } from "@/lib/api";
-import { saveApplication, getStoredApplications } from "@/lib/storage";
+import { createApplication, getSavedJobIds } from "@/lib/supabase-storage";
 import { Search, Loader2, Sparkles } from "lucide-react";
 
 export default function JobsPage() {
@@ -21,11 +22,9 @@ export default function JobsPage() {
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Load saved job IDs from localStorage on mount
+  // Load saved job IDs from Supabase on mount
   useEffect(() => {
-    const apps = getStoredApplications();
-    const ids = new Set(apps.map((a) => a.job_id));
-    setSavedJobIds(ids);
+    getSavedJobIds().then(setSavedJobIds);
   }, []);
 
   const searchMutation = useMutation({
@@ -66,17 +65,19 @@ export default function JobsPage() {
     },
   });
 
-  const handleSaveJob = (job: Job) => {
+  const handleSaveJob = async (job: Job) => {
     const jobId = job.id || job.source_id || "";
     setSavingJobId(jobId);
 
-    // Save to localStorage
-    saveApplication(job);
+    // Save to Supabase
+    const result = await createApplication(job);
 
-    // Update UI
-    setSavedJobIds((prev) => new Set(prev).add(jobId));
+    if (result) {
+      // Update UI
+      setSavedJobIds((prev) => new Set(prev).add(jobId));
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    }
     setSavingJobId(null);
-    queryClient.invalidateQueries({ queryKey: ["applications"] });
   };
 
   const handleSearch = (useAI: boolean) => {
@@ -95,6 +96,7 @@ export default function JobsPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+    <AuthGuard>
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
@@ -166,5 +168,6 @@ export default function JobsPage() {
         </div>
       )}
     </div>
+    </AuthGuard>
   );
 }

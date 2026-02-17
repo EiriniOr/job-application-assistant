@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getStoredApplication, updateStoredApplication, getResumeContent } from "@/lib/storage";
+import { AuthGuard } from "@/components/auth-guard";
+import { getApplication, updateApplication, deleteApplication, getResumeContent } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
 import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -28,20 +29,26 @@ export default function ApplicationDetailPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [resumeContent, setResumeContent] = useState("");
 
-  // Load application from localStorage
+  // Load application from Supabase
   useEffect(() => {
     if (id) {
-      const stored = getStoredApplication(id);
-      setApp(stored);
-      setNotes(stored?.notes || "");
-      setIsLoading(false);
+      Promise.all([
+        getApplication(id),
+        getResumeContent()
+      ]).then(([stored, resume]) => {
+        setApp(stored);
+        setNotes(stored?.notes || "");
+        setResumeContent(resume);
+        setIsLoading(false);
+      });
     }
   }, [id]);
 
-  const handleStatusChange = (status: string) => {
+  const handleStatusChange = async (status: string) => {
     if (!app) return;
-    const updated = updateStoredApplication(id, {
+    const updated = await updateApplication(id, {
       status,
       applied_at: status === "applied" ? new Date().toISOString() : app.applied_at,
     });
@@ -50,20 +57,20 @@ export default function ApplicationDetailPage() {
     }
   };
 
-  const handleNotesChange = () => {
+  const handleNotesChange = async () => {
     if (!app) return;
-    const updated = updateStoredApplication(id, { notes });
+    const updated = await updateApplication(id, { notes });
     if (updated) {
       setApp(updated);
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirm("Delete this application?")) {
-      const apps = JSON.parse(localStorage.getItem("job_assistant_applications") || "[]");
-      const filtered = apps.filter((a: Application) => a.id !== id);
-      localStorage.setItem("job_assistant_applications", JSON.stringify(filtered));
-      router.push("/applications");
+      const success = await deleteApplication(id);
+      if (success) {
+        router.push("/applications");
+      }
     }
   };
 
@@ -74,8 +81,6 @@ export default function ApplicationDetailPage() {
     setGenerateError(null);
 
     try {
-      const resumeContent = getResumeContent();
-
       const response = await fetch("/api/cover-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,7 +99,7 @@ export default function ApplicationDetailPage() {
       }
 
       // Save cover letter to application
-      const updated = updateStoredApplication(id, { cover_letter: data.coverLetter });
+      const updated = await updateApplication(id, { cover_letter: data.coverLetter });
       if (updated) {
         setApp(updated);
       }
@@ -115,185 +120,191 @@ export default function ApplicationDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <AuthGuard>
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AuthGuard>
     );
   }
 
   if (!app) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Application not found</p>
-        <Button variant="link" onClick={() => router.push("/applications")}>
-          Back to Applications
-        </Button>
-      </div>
+      <AuthGuard>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Application not found</p>
+          <Button variant="link" onClick={() => router.push("/applications")}>
+            Back to Applications
+          </Button>
+        </div>
+      </AuthGuard>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-              {app.job_title}
-            </h1>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Building2 className="h-4 w-4" />
-              <span>{app.company}</span>
+    <AuthGuard>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+                {app.job_title}
+              </h1>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Building2 className="h-4 w-4" />
+                <span>{app.company}</span>
+              </div>
             </div>
           </div>
+          <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-red-700">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-red-700">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </Button>
-      </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Status */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Status */}
+          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-sm text-slate-600">Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Badge variant="outline" className="capitalize text-base px-3 py-1">
+                {app.status.replace("_", " ")}
+              </Badge>
+              <div className="flex flex-wrap gap-2">
+                {STATUSES.filter((s) => s !== app.status).map((s) => (
+                  <Button
+                    key={s}
+                    variant="outline"
+                    size="sm"
+                    className="capitalize"
+                    onClick={() => handleStatusChange(s)}
+                  >
+                    {s.replace("_", " ")}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-sm text-slate-600">Timeline</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <p>
+                <span className="text-muted-foreground">Saved:</span>{" "}
+                {new Date(app.created_at).toLocaleDateString()}
+              </p>
+              {app.applied_at && (
+                <p>
+                  <span className="text-muted-foreground">Applied:</span>{" "}
+                  {new Date(app.applied_at).toLocaleDateString()}
+                </p>
+              )}
+              <p>
+                <span className="text-muted-foreground">Updated:</span>{" "}
+                {new Date(app.updated_at).toLocaleDateString()}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Cover Letter Section */}
         <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-sm text-slate-600">Status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Badge variant="outline" className="capitalize text-base px-3 py-1">
-              {app.status.replace("_", " ")}
-            </Badge>
-            <div className="flex flex-wrap gap-2">
-              {STATUSES.filter((s) => s !== app.status).map((s) => (
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+              <Sparkles className="h-4 w-4" />
+              AI Cover Letter
+            </CardTitle>
+            <div className="flex gap-2">
+              {app.cover_letter && (
                 <Button
-                  key={s}
                   variant="outline"
                   size="sm"
-                  className="capitalize"
-                  onClick={() => handleStatusChange(s)}
+                  onClick={handleCopyCoverLetter}
                 >
-                  {s.replace("_", " ")}
+                  {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                  {copied ? "Copied!" : "Copy"}
                 </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Timeline */}
-        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-sm text-slate-600">Timeline</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm space-y-2">
-            <p>
-              <span className="text-muted-foreground">Saved:</span>{" "}
-              {new Date(app.created_at).toLocaleDateString()}
-            </p>
-            {app.applied_at && (
-              <p>
-                <span className="text-muted-foreground">Applied:</span>{" "}
-                {new Date(app.applied_at).toLocaleDateString()}
-              </p>
-            )}
-            <p>
-              <span className="text-muted-foreground">Updated:</span>{" "}
-              {new Date(app.updated_at).toLocaleDateString()}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Cover Letter Section */}
-      <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
-            <Sparkles className="h-4 w-4" />
-            AI Cover Letter
-          </CardTitle>
-          <div className="flex gap-2">
-            {app.cover_letter && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyCoverLetter}
-              >
-                {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                {copied ? "Copied!" : "Copy"}
-              </Button>
-            )}
-            <Button
-              size="sm"
-              onClick={handleGenerateCoverLetter}
-              disabled={isGenerating}
-              className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
-            >
-              {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Sparkles className="h-4 w-4 mr-2" />
               )}
-              {app.cover_letter ? "Regenerate" : "Generate"}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {generateError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {generateError}
+              <Button
+                size="sm"
+                onClick={handleGenerateCoverLetter}
+                disabled={isGenerating}
+                className="bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700"
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                {app.cover_letter ? "Regenerate" : "Generate"}
+              </Button>
             </div>
-          )}
-          {app.cover_letter ? (
-            <div className="prose prose-sm max-w-none">
-              <p className="whitespace-pre-wrap text-slate-700">{app.cover_letter}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Click &quot;Generate&quot; to create a personalized cover letter using AI.
-              {getResumeContent() ? " Your resume will be used to tailor the letter." : " Add your resume info in the Resumes page for better results."}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Job Description */}
-        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
-              <FileText className="h-4 w-4" />
-              Job Description
-            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {app.job_description || "No description available"}
-            </p>
+            {generateError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {generateError}
+              </div>
+            )}
+            {app.cover_letter ? (
+              <div className="prose prose-sm max-w-none">
+                <p className="whitespace-pre-wrap text-slate-700">{app.cover_letter}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Click &quot;Generate&quot; to create a personalized cover letter using AI.
+                {resumeContent ? " Your resume will be used to tailor the letter." : " Add your resume info in the Resumes page for better results."}
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        {/* Notes */}
-        <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
-              <FileText className="h-4 w-4" />
-              Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add notes about this application..."
-              className="w-full h-32 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <Button size="sm" onClick={handleNotesChange}>
-              Save Notes
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Job Description */}
+          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+                <FileText className="h-4 w-4" />
+                Job Description
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {app.job_description || "No description available"}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Notes */}
+          <Card className="border-0 shadow-md bg-white/90 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2 text-slate-600">
+                <FileText className="h-4 w-4" />
+                Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add notes about this application..."
+                className="w-full h-32 p-3 text-sm border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Button size="sm" onClick={handleNotesChange}>
+                Save Notes
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }
