@@ -11,6 +11,7 @@ function toApplication(db: DbApplication): Application {
     job_title: db.job_title,
     company: db.company,
     job_description: db.job_description || undefined,
+    job_url: db.job_url || undefined,
     status: db.status,
     cover_letter: db.cover_letter,
     notes: db.notes,
@@ -62,6 +63,7 @@ export async function createApplication(job: Job): Promise<Application | null> {
       job_title: job.title,
       company: job.company,
       job_description: job.description || null,
+      job_url: job.url || null,
       status: "saved",
     })
     .select()

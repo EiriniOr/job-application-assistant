@@ -146,6 +146,7 @@ export interface Application {
   updated_at: string;
   events?: ApplicationEvent[];
   job_description?: string;
+  job_url?: string;
 }
 
 export interface ApplicationEvent {

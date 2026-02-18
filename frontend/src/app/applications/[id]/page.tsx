@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
 import { getApplication, updateApplication, deleteApplication, getResumeContent } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
-import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check } from "lucide-react";
+import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const STATUSES = [
@@ -295,11 +295,22 @@ export default function ApplicationDetailPage() {
         <div className="grid gap-6 md:grid-cols-2">
           {/* Job Description */}
           <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2 text-purple-200">
                 <FileText className="h-4 w-4" />
                 Job Description
               </CardTitle>
+              {app.job_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white"
+                  onClick={() => window.open(app.job_url, "_blank")}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Original
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <p className="text-sm text-purple-300 whitespace-pre-wrap">

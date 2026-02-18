@@ -15,6 +15,7 @@ export interface DbApplication {
   job_title: string;
   company: string;
   job_description: string | null;
+  job_url: string | null;
   status: string;
   cover_letter: string | null;
   notes: string | null;
