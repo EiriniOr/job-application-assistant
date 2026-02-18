@@ -30,6 +30,7 @@ export default function ApplicationDetailPage() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [resumeContent, setResumeContent] = useState("");
+  const [coverLetterLang, setCoverLetterLang] = useState<"en" | "sv">("en");
 
   // Load application from Supabase
   useEffect(() => {
@@ -89,6 +90,7 @@ export default function ApplicationDetailPage() {
           company: app.company,
           jobDescription: app.job_description,
           resumeInfo: resumeContent,
+          language: coverLetterLang,
         }),
       });
 
@@ -222,7 +224,29 @@ export default function ApplicationDetailPage() {
               <Sparkles className="h-4 w-4 text-fuchsia-400" />
               AI Cover Letter
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              <div className="flex rounded-md overflow-hidden border border-purple-400/50">
+                <button
+                  onClick={() => setCoverLetterLang("en")}
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${
+                    coverLetterLang === "en"
+                      ? "bg-purple-500 text-white"
+                      : "bg-slate-800 text-purple-300 hover:bg-purple-500/20"
+                  }`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setCoverLetterLang("sv")}
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${
+                    coverLetterLang === "sv"
+                      ? "bg-purple-500 text-white"
+                      : "bg-slate-800 text-purple-300 hover:bg-purple-500/20"
+                  }`}
+                >
+                  SV
+                </button>
+              </div>
               {app.cover_letter && (
                 <Button
                   variant="outline"
