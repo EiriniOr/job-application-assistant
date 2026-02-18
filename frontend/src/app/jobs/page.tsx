@@ -17,7 +17,7 @@ const SOURCES = [
 ];
 
 export default function JobsPage() {
-  const [keywords, setKeywords] = useState("developer");
+  const [keywords, setKeywords] = useState("");
   const [location, setLocation] = useState("");
   const [englishOnly, setEnglishOnly] = useState(false);
   const [selectedSources, setSelectedSources] = useState<string[]>(["arbetsformedlingen"]);
@@ -122,10 +122,6 @@ export default function JobsPage() {
 
   const isSearching = searchMutation.isPending;
 
-  useEffect(() => {
-    searchMutation.mutate();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <AuthGuard>
       <div className="space-y-6">
@@ -203,7 +199,7 @@ export default function JobsPage() {
           />
           <Button
             onClick={() => searchMutation.mutate()}
-            disabled={isSearching || selectedSources.length === 0}
+            disabled={isSearching || selectedSources.length === 0 || !keywords.trim()}
             className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
           >
             {isSearching ? (
