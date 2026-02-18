@@ -23,76 +23,74 @@ export async function POST(request: NextRequest) {
 
 ${resumeInfo ? `APPLICANT'S RESUME/BACKGROUND:\n${resumeInfo}` : ""}`;
 
-    const swedishPrompt = `Du är en expert på karriärcoaching och ATS-optimering (Applicant Tracking System). Skriv ett effektivt personligt brev på svenska för en jobbansökan i Sverige.
+    const swedishPrompt = `Du är en expert på karriärcoaching. Skriv ett personligt brev på svenska för en jobbansökan i Sverige.
 
 ${jobDetails}
 
-KRITISKA KRAV:
+INSTRUKTIONER:
 
-1. INLEDNING: Börja med "Hej!" - skapar en vänlig, kulturellt lämplig ton för svenska arbetsmarknaden.
+1. INLEDNING: Börja med "Hej!" - vänlig ton för svenska arbetsmarknaden.
 
-2. ATS-OPTIMERING:
-   - Extrahera och inkludera nyckelord från jobbannonsen naturligt
-   - Inkludera specifika färdigheter, tekniker och kvalifikationer som nämns i annonsen
-   - Använd branschstandard terminologi som ATS-system känner igen
-   - Undvik tabeller, rubriker eller specialformatering som förvirrar ATS
+2. MATCHNING OCH MERVÄRDE:
+   - Identifiera hur kandidatens erfarenhet matchar rollens behov
+   - Lyft fram YTTERLIGARE färdigheter från CV:t som inte nämns i annonsen men som tillför värde till rollen
+   - Visa hur kandidaten kan bidra utöver det som efterfrågas
 
-3. STYRKOR SOM MATCHAR:
-   - Analysera jobbkraven och identifiera de TOP 3-5 viktigaste kvalifikationerna
-   - För varje nyckelkrav, ge ett specifikt exempel från CV:t som visar hur kandidaten uppfyller det
-   - Kvantifiera prestationer där det är möjligt (%, siffror, skala)
+3. NATURLIGT SPRÅK:
+   - KOPIERA INTE statistik, siffror eller procentsatser från jobbannonsen ordagrant
+   - Förstå innebörden av annonsen och uttryck det med egna ord
+   - Undvik att citera annonsen direkt - det låter onaturligt
+   - Använd kandidatens egna prestationer och siffror från CV:t
 
 4. STRUKTUR (3-4 stycken):
-   - Stycke 1: Entusiastisk öppning med "Hej!", ange tjänsten, uttryck genuint intresse för företaget
-   - Stycke 2: Nyckelstyrkorna matchade mot jobbkraven med specifika exempel
-   - Stycke 3: Ytterligare relevanta färdigheter/erfarenheter, kulturell passform
-   - Stycke 4: Stark avslutning med uppmaning till handling, tillgänglighet för intervju
+   - Stycke 1: "Hej!", tjänsten, genuint intresse för företaget
+   - Stycke 2: Relevanta styrkor med konkreta exempel
+   - Stycke 3: Ytterligare värde kandidaten tillför, unika bidrag
+   - Stycke 4: Avslutning med tillgänglighet för intervju
 
 5. TON:
-   - Professionell men varm och personlig (svensk arbetskultur värderar ödmjukhet och samarbete)
+   - Professionell men personlig (svensk arbetskultur värderar ödmjukhet)
    - Självsäker utan att vara arrogant
-   - Visa genuint engagemang, inte generiska fraser
-   - Undvik klichéer
+   - Genuint engagemang, inte generiska fraser
 
 6. LÄNGD: 250-350 ord
 
-Returnera ENDAST personligt brev-texten på svenska, redo att kopiera och använda. Inga ytterligare kommentarer eller förklaringar.`;
+Returnera ENDAST personligt brev-texten på svenska. Inga kommentarer.`;
 
-    const englishPrompt = `You are an expert career coach and ATS (Applicant Tracking System) optimization specialist. Generate a highly effective cover letter for a job application in Sweden.
+    const englishPrompt = `You are an expert career coach. Generate a cover letter for a job application in Sweden.
 
 ${jobDetails}
 
-CRITICAL REQUIREMENTS:
+INSTRUCTIONS:
 
-1. OPENING: Start with "Hej!" (Swedish greeting) - this creates a friendly, culturally appropriate tone for Swedish job market.
+1. OPENING: Start with "Hej!" (Swedish greeting) - friendly tone for Swedish job market.
 
-2. ATS OPTIMIZATION:
-   - Extract and naturally incorporate keywords from the job description
-   - Include specific skills, technologies, and qualifications mentioned in the ad
-   - Use industry-standard terminology that ATS systems recognize
-   - Avoid tables, headers, or special formatting that confuse ATS
+2. MATCHING AND ADDED VALUE:
+   - Identify how the candidate's experience matches the role's needs
+   - Highlight ADDITIONAL skills from the resume NOT mentioned in the job ad that add value to the role
+   - Show how the candidate can contribute beyond what's explicitly requested
 
-3. STRENGTHS MATCHING:
-   - Analyze the job requirements and identify the TOP 3-5 most important qualifications
-   - For each key requirement, provide a specific example from the resume showing how the candidate meets it
-   - Use the STAR method implicitly (Situation, Task, Action, Result) for achievements
-   - Quantify achievements where possible (%, numbers, scale)
+3. NATURAL LANGUAGE:
+   - DO NOT copy statistics, numbers, or percentages from the job ad verbatim
+   - Understand the meaning/intent of the ad and express it in your own words
+   - Avoid quoting the ad directly - it sounds unnatural
+   - Use the candidate's own achievements and numbers from THEIR resume
 
 4. STRUCTURE (3-4 paragraphs):
-   - Para 1: Enthusiastic opening with "Hej!", state the position, express genuine interest in the company
-   - Para 2: Key strengths matched to job requirements with specific examples
-   - Para 3: Additional relevant skills/experience, cultural fit, what you bring to the team
-   - Para 4: Strong closing with call to action, availability to discuss further
+   - Para 1: "Hej!", the position, genuine interest in the company
+   - Para 2: Relevant strengths with concrete examples
+   - Para 3: Additional value the candidate brings, unique contributions
+   - Para 4: Closing with availability for interview
 
 5. TONE:
-   - Professional but warm and personable (Swedish work culture values humility and collaboration)
+   - Professional but personable (Swedish work culture values humility)
    - Confident without being arrogant
-   - Show genuine enthusiasm, not generic phrases
-   - Avoid clichés like "passionate self-starter" or "think outside the box"
+   - Genuine enthusiasm, not generic phrases
+   - Avoid clichés
 
-6. LENGTH: 250-350 words (optimal for both human readers and ATS)
+6. LENGTH: 250-350 words
 
-Return ONLY the cover letter text, ready to copy and use. No additional commentary, headers, or explanations.`;
+Return ONLY the cover letter text. No commentary.`;
 
     const prompt = language === "sv" ? swedishPrompt : englishPrompt;
 

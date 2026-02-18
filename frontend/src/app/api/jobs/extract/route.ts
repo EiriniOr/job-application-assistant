@@ -57,7 +57,7 @@ Return a JSON object with these fields (use null if not found):
   "title": "Job title",
   "company": "Company name",
   "location": "Job location",
-  "description": "Job description (summarize in 2-3 paragraphs)",
+  "description": "Full job description text (keep the original wording, do not summarize)",
   "salary_min": null or number,
   "salary_max": null or number,
   "is_remote": true/false or null,

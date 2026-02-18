@@ -51,7 +51,7 @@ async function searchArbetsformedlingen(
         location: loc,
         is_remote: Boolean(hit.remote_work),
         description: String(
-          ((hit.description as Record<string, string>)?.text || "").slice(0, 1000)
+          (hit.description as Record<string, string>)?.text || ""
         ),
         salary_min: null,
         salary_max: null,
@@ -115,7 +115,7 @@ async function searchJSearch(
       company: String(job.employer_name || "Unknown"),
       location: String(job.job_city || job.job_country || "Remote"),
       is_remote: Boolean(job.job_is_remote),
-      description: String(job.job_description || "").slice(0, 1000),
+      description: String(job.job_description || ""),
       salary_min: job.job_min_salary ? Number(job.job_min_salary) : null,
       salary_max: job.job_max_salary ? Number(job.job_max_salary) : null,
       url: String(job.job_apply_link || ""),
