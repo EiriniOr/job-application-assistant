@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950`}>
         <Providers>
           <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-purple-500/20 shadow-lg">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -50,7 +50,10 @@ export default function RootLayout({
               </div>
             </nav>
           </header>
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+          <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+          <footer className="mt-auto py-6 text-center text-purple-400/60 text-sm border-t border-purple-500/10">
+            Made by <a href="https://eirini-portfolio-aer3.vercel.app/" target="_blank" rel="noreferrer" className="text-fuchsia-400/80 hover:text-fuchsia-300 transition-colors">Eirini Ornithopoulou</a>
+          </footer>
         </Providers>
       </body>
     </html>
