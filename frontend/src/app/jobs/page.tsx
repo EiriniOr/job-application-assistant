@@ -13,7 +13,7 @@ import { Search, Loader2, Plus, Link2, X, Check, Globe } from "lucide-react";
 
 const SOURCES = [
   { id: "arbetsformedlingen", name: "Arbetsförmedlingen", description: "Swedish Public Employment" },
-  { id: "jsearch", name: "LinkedIn/Indeed", description: "Via JSearch" },
+  { id: "jsearch", name: "JSearch (Indeed, etc)", description: "Via JSearch" },
 ];
 
 export default function JobsPage() {
