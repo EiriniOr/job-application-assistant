@@ -100,7 +100,7 @@ INSTRUCTIONS TO SOUND HUMAN (NOT AI-GENERATED):
 
 4. CLOSING:
    - "I look forward to discussing how I can contribute to [company name], and thank you for considering my application."
-   - Sign off with "Best regards," or "Tack så mycket," and [first name last name]
+   - Sign off with "Best regards," and [first name last name]
 
 5. TONE:
    - Write like a real person, not like an AI
