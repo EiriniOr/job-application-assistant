@@ -28,10 +28,10 @@ async function searchArbetsformedlingen(
     searchQuery += " english";
   }
 
-  // Filter to jobs posted in the past week
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const publishedAfter = oneWeekAgo.toISOString().split("T")[0];
+  // Filter to jobs posted in the past 2 weeks
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const publishedAfter = twoWeeksAgo.toISOString().split("T")[0];
 
   const url = `https://jobsearch.api.jobtechdev.se/search?q=${encodeURIComponent(searchQuery)}&limit=${limit}&published-after=${publishedAfter}`;
 
@@ -90,7 +90,7 @@ async function searchJSearch(
   if (englishOnly) {
     query += " english";
   }
-  let url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1&date_posted=week`;
+  let url = `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(query)}&num_pages=1&date_posted=month`;
 
   // Also add location as separate parameter for better filtering
   if (location) {
