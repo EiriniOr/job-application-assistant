@@ -7,7 +7,7 @@ const anthropic = new Anthropic({
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobTitle, company, jobDescription, resumeInfo, language = "en" } = await request.json();
+    const { jobTitle, company, jobDescription, resumeInfo, language = "en", atsSuggestions } = await request.json();
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
@@ -16,12 +16,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const atsSection = atsSuggestions ? `
+ATS ANALYSIS RESULTS (use these to strengthen the letter):
+- Missing Keywords to naturally incorporate: ${atsSuggestions.missingKeywords?.join(", ") || "None"}
+- Missing Soft Skills to demonstrate: ${atsSuggestions.missingSoftSkills?.join(", ") || "None"}
+- Suggestions: ${atsSuggestions.suggestions?.join("; ") || "None"}
+
+IMPORTANT: Only mention skills/keywords that are TRUTHFULLY in the applicant's background.
+Demonstrate soft skills through concrete examples from their experience.
+` : "";
+
     const jobDetails = `JOB DETAILS:
 - Position: ${jobTitle}
 - Company: ${company}
 - Job Description: ${jobDescription || "Not provided"}
 
-${resumeInfo ? `APPLICANT'S RESUME/BACKGROUND:\n${resumeInfo}` : ""}`;
+${resumeInfo ? `APPLICANT'S RESUME/BACKGROUND:\n${resumeInfo}` : ""}
+${atsSection}`;
 
     const swedishPrompt = `Du är en expert på karriärcoaching. Skriv ett personligt brev på svenska för en jobbansökan i Sverige.
 

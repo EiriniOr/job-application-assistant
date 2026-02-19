@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
 import { getApplication, updateApplication, deleteApplication, getResumeContent } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
-import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp, Wand2, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const STATUSES = [
@@ -41,6 +41,11 @@ export default function ApplicationDetailPage() {
   } | null>(null);
   const [atsLoading, setAtsLoading] = useState(false);
   const [atsExpanded, setAtsExpanded] = useState(false);
+  const [improvedResume, setImprovedResume] = useState("");
+  const [improvedResumeLoading, setImprovedResumeLoading] = useState(false);
+  const [showImprovedResume, setShowImprovedResume] = useState(false);
+  const [improvedResumeCopied, setImprovedResumeCopied] = useState(false);
+  const [isGeneratingWithAts, setIsGeneratingWithAts] = useState(false);
 
   // Load application from Supabase
   useEffect(() => {
@@ -153,6 +158,83 @@ export default function ApplicationDetailPage() {
       console.error("ATS score error:", error);
     } finally {
       setAtsLoading(false);
+    }
+  };
+
+  const handleGenerateImprovedResume = async () => {
+    if (!app?.job_description || !resumeContent || !atsScore) return;
+
+    setImprovedResumeLoading(true);
+    try {
+      const response = await fetch("/api/improve-resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: resumeContent,
+          jobDescription: app.job_description,
+          missingKeywords: atsScore.missingKeywords,
+          missingSoftSkills: atsScore.missingSoftSkills,
+          suggestions: atsScore.suggestions,
+          language: coverLetterLang,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setImprovedResume(data.improvedResume);
+        setShowImprovedResume(true);
+      }
+    } catch (error) {
+      console.error("Resume improvement error:", error);
+    } finally {
+      setImprovedResumeLoading(false);
+    }
+  };
+
+  const handleCopyImprovedResume = () => {
+    navigator.clipboard.writeText(improvedResume);
+    setImprovedResumeCopied(true);
+    setTimeout(() => setImprovedResumeCopied(false), 2000);
+  };
+
+  const handleGenerateWithAtsSuggestions = async () => {
+    if (!app || !atsScore) return;
+
+    setIsGeneratingWithAts(true);
+    setGenerateError(null);
+
+    try {
+      const response = await fetch("/api/cover-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: app.job_title,
+          company: app.company,
+          jobDescription: app.job_description,
+          resumeInfo: resumeContent,
+          language: coverLetterLang,
+          atsSuggestions: {
+            missingKeywords: atsScore.missingKeywords,
+            missingSoftSkills: atsScore.missingSoftSkills,
+            suggestions: atsScore.suggestions,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate cover letter");
+      }
+
+      const updated = await updateApplication(id, { cover_letter: data.coverLetter });
+      if (updated) {
+        setApp(updated);
+      }
+    } catch (error) {
+      setGenerateError(error instanceof Error ? error.message : "Unknown error");
+    } finally {
+      setIsGeneratingWithAts(false);
     }
   };
 
@@ -395,6 +477,26 @@ export default function ApplicationDetailPage() {
                         </ul>
                       </div>
                     )}
+
+                    {/* Generate Improved CV Button */}
+                    <div className="pt-2">
+                      <Button
+                        size="sm"
+                        onClick={handleGenerateImprovedResume}
+                        disabled={improvedResumeLoading}
+                        className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
+                      >
+                        {improvedResumeLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Wand2 className="h-4 w-4 mr-2" />
+                        )}
+                        Generate Improved CV
+                      </Button>
+                      <p className="text-xs text-purple-400 mt-1">
+                        AI will rewrite your CV with the missing keywords (truthfully)
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -451,7 +553,7 @@ export default function ApplicationDetailPage() {
               <Button
                 size="sm"
                 onClick={handleGenerateCoverLetter}
-                disabled={isGenerating}
+                disabled={isGenerating || isGeneratingWithAts}
                 className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
               >
                 {isGenerating ? (
@@ -461,6 +563,21 @@ export default function ApplicationDetailPage() {
                 )}
                 {app.cover_letter ? "Regenerate" : "Generate"}
               </Button>
+              {atsScore && (
+                <Button
+                  size="sm"
+                  onClick={handleGenerateWithAtsSuggestions}
+                  disabled={isGenerating || isGeneratingWithAts}
+                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
+                >
+                  {isGeneratingWithAts ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Target className="h-4 w-4 mr-2" />
+                  )}
+                  With ATS
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -534,6 +651,47 @@ export default function ApplicationDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Improved Resume Modal */}
+        {showImprovedResume && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-3xl max-h-[90vh] flex flex-col border border-purple-500/30 shadow-2xl shadow-purple-500/20 bg-slate-900">
+              <CardHeader className="flex flex-row items-center justify-between shrink-0">
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Wand2 className="h-5 w-5 text-cyan-400" />
+                  Improved CV
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyImprovedResume}
+                    className="border-purple-400/50 text-purple-200 hover:bg-purple-500/20 hover:text-white"
+                  >
+                    {improvedResumeCopied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                    {improvedResumeCopied ? "Copied!" : "Copy"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-purple-300 hover:text-white hover:bg-purple-500/20"
+                    onClick={() => setShowImprovedResume(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="overflow-y-auto flex-1">
+                <p className="text-xs text-purple-400 mb-3">
+                  This CV has been rewritten to better match the job description. Only truthful information from your original CV is included.
+                </p>
+                <div className="bg-slate-800/50 border border-purple-500/20 rounded-lg p-4">
+                  <pre className="text-sm text-purple-100 whitespace-pre-wrap font-sans">{improvedResume}</pre>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </AuthGuard>
   );
