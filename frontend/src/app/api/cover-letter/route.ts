@@ -61,7 +61,7 @@ INSTRUKTIONER FÖR ATT LÅTA MÄNSKLIG (INTE AI-GENERERAD):
 
 4. AVSLUTNING:
    - "Jag ser fram emot att diskutera hur jag kan bidra till [företagsnamn], och tack för att ni överväger min ansökan."
-   - Skriv under med "Vänliga hälsningar," och [förnamn efternamn]
+   - Skriv under med "Med vänlig hälsning," och [förnamn efternamn]
 
 5. TON:
    - Skriv som en riktig person, inte som en AI

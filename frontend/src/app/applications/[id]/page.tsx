@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
 import { getApplication, updateApplication, deleteApplication, getResumeContent } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
-import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp, Wand2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp, Wand2, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const STATUSES = [
@@ -46,6 +46,7 @@ export default function ApplicationDetailPage() {
   const [showImprovedResume, setShowImprovedResume] = useState(false);
   const [improvedResumeCopied, setImprovedResumeCopied] = useState(false);
   const [isGeneratingWithAts, setIsGeneratingWithAts] = useState(false);
+  const [newAtsScore, setNewAtsScore] = useState<number | null>(null);
 
   // Load application from Supabase
   useEffect(() => {
@@ -165,6 +166,7 @@ export default function ApplicationDetailPage() {
     if (!app?.job_description || !resumeContent || !atsScore) return;
 
     setImprovedResumeLoading(true);
+    setNewAtsScore(null);
     try {
       const response = await fetch("/api/improve-resume", {
         method: "POST",
@@ -183,6 +185,21 @@ export default function ApplicationDetailPage() {
       if (response.ok) {
         setImprovedResume(data.improvedResume);
         setShowImprovedResume(true);
+
+        // Calculate new ATS score for improved resume
+        const newScoreResponse = await fetch("/api/ats-score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resumeText: data.improvedResume,
+            jobDescription: app.job_description,
+            language: coverLetterLang,
+          }),
+        });
+        const newScoreData = await newScoreResponse.json();
+        if (newScoreResponse.ok) {
+          setNewAtsScore(newScoreData.overallScore);
+        }
       }
     } catch (error) {
       console.error("Resume improvement error:", error);
@@ -684,6 +701,32 @@ export default function ApplicationDetailPage() {
                 </div>
               </CardHeader>
               <CardContent className="overflow-y-auto flex-1">
+                {/* ATS Score Comparison */}
+                {atsScore && newAtsScore !== null && (
+                  <div className="mb-4 p-4 bg-gradient-to-r from-slate-800/80 to-slate-800/50 rounded-lg border border-purple-500/20">
+                    <p className="text-xs text-purple-400 mb-3 font-medium">ATS Score Improvement</p>
+                    <div className="flex items-center justify-center gap-6">
+                      <div className="text-center">
+                        <p className="text-xs text-purple-300 mb-1">Before</p>
+                        <div className="text-2xl font-bold text-purple-400">{atsScore.overallScore}%</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ArrowRight className="h-5 w-5 text-purple-400" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-purple-300 mb-1">After</p>
+                        <div className="text-2xl font-bold text-emerald-400">{newAtsScore}%</div>
+                      </div>
+                      {newAtsScore > atsScore.overallScore && (
+                        <div className="ml-2 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+                          <span className="text-sm font-medium text-emerald-400">
+                            +{newAtsScore - atsScore.overallScore}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <p className="text-xs text-purple-400 mb-3">
                   This CV has been rewritten to better match the job description. Only truthful information from your original CV is included.
                 </p>

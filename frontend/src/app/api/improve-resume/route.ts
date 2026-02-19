@@ -5,6 +5,20 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// 10 ATS optimization rules from resume-analyzer
+const ATS_RULES = `
+1. MIRROR THE JOB AD - Use the same key skills and phrases (truthfully) in the CV, especially in summary and recent roles.
+2. USE SIMPLE FORMATTING - One column, no tables or graphics, standard headings (Experience, Education, Skills) so ATS can parse correctly.
+3. MATCH TITLES WHERE POSSIBLE - Align title/summary with the target role if it reflects actual experience.
+4. PUT IMPORTANT KEYWORDS HIGH - Prioritize the most relevant tools, domains and responsibilities in the top third of the CV.
+5. ADD A CLEAR SKILLS SECTION - List core tools, methods and languages in a dedicated Skills section for easy matching.
+6. TAILOR FOR THIS APPLICATION - Reorder bullets, add/remove details so the CV specifically reflects THIS job description.
+7. AVOID KEYWORD STUFFING - Repeat key terms a few times in context, but don't dump buzzwords; humans still read it.
+8. USE ATS-FRIENDLY STRUCTURE - Clear section headers, consistent date formats, no fancy formatting.
+9. MUST-HAVES OVER NICE-TO-HAVES - Real ATS weigh must-have skills heavier, so prioritize those.
+10. LAST JOB TITLE MATTERS - If applicable, align the most recent job title closer to the target role.
+`;
+
 export async function POST(request: NextRequest) {
   try {
     const { resumeText, jobDescription, missingKeywords, missingSoftSkills, suggestions, language = "en" } = await request.json();
@@ -23,14 +37,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prompt = `You are an expert CV editor optimizing resumes for ATS systems.
+    const prompt = `You are an expert CV editor optimizing resumes for ATS (Applicant Tracking Systems).
 
 TASK:
 Rewrite the following CV to better match this job description, while staying COMPLETELY TRUTHFUL.
-- DO NOT invent skills, experience, or technologies not already in the CV
-- You may rephrase, reorder, and emphasize relevant experience
-- Naturally incorporate missing keywords WHERE THEY TRUTHFULLY APPLY
-- Keep the same structure and length as the original
+
+THE 10 ATS OPTIMIZATION RULES TO FOLLOW:
+${ATS_RULES}
 
 ORIGINAL CV:
 """${resumeText}"""
@@ -38,26 +51,26 @@ ORIGINAL CV:
 JOB DESCRIPTION:
 """${jobDescription}"""
 
-MISSING KEYWORDS TO INCORPORATE (only if truthful):
+MISSING KEYWORDS TO INCORPORATE (only where truthful):
 ${missingKeywords?.join(", ") || "None"}
 
 MISSING SOFT SKILLS TO DEMONSTRATE:
 ${missingSoftSkills?.join(", ") || "None"}
 
-ATS SUGGESTIONS:
+SPECIFIC SUGGESTIONS:
 ${suggestions?.join("\n") || "None"}
 
-INSTRUCTIONS:
+CRITICAL INSTRUCTIONS:
 1. Keep the CV in ${language === "sv" ? "Swedish" : "English"}
-2. Maintain ATS-friendly structure: clear sections (Summary, Experience, Education, Skills)
-3. Use simple formatting, no tables or columns
-4. Preserve ALL roles, dates, employers, education from the original
-5. Rephrase bullets to naturally include relevant keywords where they apply
-6. Add soft skills demonstrations through concrete examples where truthful
-7. DO NOT add skills or experience not present in the original CV
-8. Keep similar length - do not shorten or summarize
+2. DO NOT invent skills, experience, or technologies not already in the CV
+3. Preserve ALL roles, dates, employers, education from the original
+4. Apply the 10 ATS rules above to optimize structure and content
+5. Move the most relevant experience and skills toward the top
+6. Rephrase bullets to naturally include relevant keywords where they truthfully apply
+7. Ensure clear section headers: Summary/Profile, Experience, Education, Skills
+8. Keep similar length - do not summarize or shorten significantly
 
-Return ONLY the improved CV text. No commentary or explanations.`;
+Return ONLY the improved CV text. No commentary, explanations, or markdown formatting.`;
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
