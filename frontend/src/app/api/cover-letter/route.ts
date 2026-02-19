@@ -27,31 +27,36 @@ ${resumeInfo ? `APPLICANT'S RESUME/BACKGROUND:\n${resumeInfo}` : ""}`;
 
 ${jobDetails}
 
-INSTRUKTIONER:
+INSTRUKTIONER FÖR ATT LÅTA MÄNSKLIG (INTE AI-GENERERAD):
 
-1. INLEDNING: Börja med "Hej!" - vänlig ton för svenska arbetsmarknaden.
+1. FÖRSTA STYCKET - Direkt och enkel:
+   - Börja med "Hej!" följt av "Mitt namn är [förnamn] och jag söker denna tjänst eftersom..."
+   - Ge en genuin anledning: det passar mina karriärmål, jag vill lösa verkliga problem, jag vill skapa värde
+   - CITERA INTE annonsen. Istället för "Ert fokus på X stämmer med min passion för X", skriv direkt "Jag brinner för att skapa AI-lösningar som ger verkligt värde"
+   - Tala om dina passioner direkt utan att referera till vad företaget sa
 
-2. MATCHNING OCH MERVÄRDE:
-   - Identifiera hur kandidatens erfarenhet matchar rollens behov
-   - Lyft fram YTTERLIGARE färdigheter från CV:t som inte nämns i annonsen men som tillför värde till rollen
-   - Visa hur kandidaten kan bidra utöver det som efterfrågas
+2. ANDRA STYCKET - Tala direkt om erfarenheter:
+   - Börja med "Under min utbildning lärde jag mig..." eller "I mitt examensarbete byggde jag..."
+   - Tala om specifika saker personen gjorde och lärde sig
+   - UNDVIK abstrakta fraser som "Min bakgrund kombinerar djup teknisk expertis med praktisk erfarenhet" - ingen pratar så
+   - Istället: "Jag arbetade med X, byggde Y, lärde mig Z"
+   - Var specifik om färdigheter och verktyg personen använde
 
-3. NATURLIGT SPRÅK:
-   - KOPIERA INTE statistik, siffror eller procentsatser från jobbannonsen ordagrant
-   - Förstå innebörden av annonsen och uttryck det med egna ord
-   - Undvik att citera annonsen direkt - det låter onaturligt
-   - Använd kandidatens egna prestationer och siffror från CV:t
+3. TREDJE STYCKET - Direkt om mervärde:
+   - Börja med "Jag bidrar även med min erfarenhet/kunskap inom X till er organisation..."
+   - Var direkt om vilka ytterligare färdigheter de kan tillföra
+   - Koppla ihop deras unika bakgrund med hur det hjälper företaget
+   - Behåll det personligt och mänskligt
 
-4. STRUKTUR (3-4 stycken):
-   - Stycke 1: "Hej!", tjänsten, genuint intresse för företaget
-   - Stycke 2: Relevanta styrkor med konkreta exempel
-   - Stycke 3: Ytterligare värde kandidaten tillför, unika bidrag
-   - Stycke 4: Avslutning med tillgänglighet för intervju
+4. AVSLUTNING:
+   - "Jag ser fram emot att diskutera hur jag kan bidra till [företagsnamn], och tack för att ni överväger min ansökan."
+   - Skriv under med "Vänliga hälsningar," och [förnamn efternamn]
 
 5. TON:
-   - Professionell men personlig (svensk arbetskultur värderar ödmjukhet)
-   - Självsäker utan att vara arrogant
-   - Genuint engagemang, inte generiska fraser
+   - Skriv som en riktig person, inte som en AI
+   - Var specifik och direkt, undvik vaga uttalanden
+   - Professionell men personlig (svensk kultur värderar ödmjukhet)
+   - Självsäker men inte arrogant
 
 6. LÄNGD: 250-350 ord
 
@@ -61,32 +66,36 @@ Returnera ENDAST personligt brev-texten på svenska. Inga kommentarer.`;
 
 ${jobDetails}
 
-INSTRUCTIONS:
+INSTRUCTIONS TO SOUND HUMAN (NOT AI-GENERATED):
 
-1. OPENING: Start with "Hej!" (Swedish greeting) - friendly tone for Swedish job market.
+1. FIRST PARAGRAPH - Direct and simple:
+   - Start with "Hej!" followed by "My name is [first name] and I am interested in this role because..."
+   - Give a genuine reason: it aligns with my career goals, I want to solve real problems, I want to create real value
+   - DO NOT quote the job ad. Instead of "Your focus on X aligns with my passion for X", write directly "I'm passionate about creating AI solutions that deliver real value"
+   - Speak about your passions directly without referencing what the company said
 
-2. MATCHING AND ADDED VALUE:
-   - Identify how the candidate's experience matches the role's needs
-   - Highlight ADDITIONAL skills from the resume NOT mentioned in the job ad that add value to the role
-   - Show how the candidate can contribute beyond what's explicitly requested
+2. SECOND PARAGRAPH - Speak directly about experiences:
+   - Start with "During my education, I learned..." or "During my thesis, I built..."
+   - Talk about specific things the person did and learned
+   - AVOID abstract phrases like "My background combines deep technical expertise with hands-on experience" - nobody talks like that
+   - Instead: "I worked with X, built Y, learned Z"
+   - Be specific about skills and tools the person used
 
-3. NATURAL LANGUAGE:
-   - DO NOT copy statistics, numbers, or percentages from the job ad verbatim
-   - Understand the meaning/intent of the ad and express it in your own words
-   - Avoid quoting the ad directly - it sounds unnatural
-   - Use the candidate's own achievements and numbers from THEIR resume
+3. THIRD PARAGRAPH - Direct about added value:
+   - Start with "I also bring my experience/knowledge in X to your organization..."
+   - Be direct about what additional skills they can bring
+   - Connect their unique background to how it helps the company
+   - Keep it personal and human
 
-4. STRUCTURE (3-4 paragraphs):
-   - Para 1: "Hej!", the position, genuine interest in the company
-   - Para 2: Relevant strengths with concrete examples
-   - Para 3: Additional value the candidate brings, unique contributions
-   - Para 4: Closing with availability for interview
+4. CLOSING:
+   - "I look forward to discussing how I can contribute to [company name], and thank you for considering my application."
+   - Sign off with "Best regards," or "Tack så mycket," and [first name last name]
 
 5. TONE:
-   - Professional but personable (Swedish work culture values humility)
-   - Confident without being arrogant
-   - Genuine enthusiasm, not generic phrases
-   - Avoid clichés
+   - Write like a real person, not like an AI
+   - Be specific and direct, avoid vague statements
+   - Professional but personable (Swedish culture values humility)
+   - Confident but not arrogant
 
 6. LENGTH: 250-350 words
 
