@@ -108,7 +108,7 @@ async function searchJSearch(
     const data = await resp.json();
     const jobs = data.data || [];
 
-    return jobs.slice(0, limit).map((job: Record<string, unknown>) => ({
+    return jobs.map((job: Record<string, unknown>) => ({
       source: String(job.job_publisher || "jsearch"),
       source_id: String(job.job_id || ""),
       title: String(job.job_title || ""),
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
   const keywords = searchParams.get("keywords") || "developer";
   const location = searchParams.get("location") || "";
   const sources = searchParams.get("sources")?.split(",") || ["arbetsformedlingen", "jsearch"];
-  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const limit = parseInt(searchParams.get("limit") || "100", 10);
   const englishOnly = searchParams.get("englishOnly") === "true";
 
   const results: Job[] = [];
