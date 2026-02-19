@@ -477,28 +477,28 @@ export default function ApplicationDetailPage() {
                         </ul>
                       </div>
                     )}
-
-                    {/* Generate Improved CV Button */}
-                    <div className="pt-2">
-                      <Button
-                        size="sm"
-                        onClick={handleGenerateImprovedResume}
-                        disabled={improvedResumeLoading}
-                        className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
-                      >
-                        {improvedResumeLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Wand2 className="h-4 w-4 mr-2" />
-                        )}
-                        Generate Improved CV
-                      </Button>
-                      <p className="text-xs text-purple-400 mt-1">
-                        AI will rewrite your CV with the missing keywords (truthfully)
-                      </p>
-                    </div>
                   </div>
                 )}
+
+                {/* Generate Improved CV Button - Always visible after ATS calculation */}
+                <div className="pt-3 border-t border-purple-500/20">
+                  <Button
+                    size="sm"
+                    onClick={handleGenerateImprovedResume}
+                    disabled={improvedResumeLoading}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
+                  >
+                    {improvedResumeLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Wand2 className="h-4 w-4 mr-2" />
+                    )}
+                    Generate Improved CV
+                  </Button>
+                  <p className="text-xs text-purple-400 mt-1">
+                    AI will rewrite your CV incorporating missing keywords (truthfully)
+                  </p>
+                </div>
               </div>
             )}
             {resumeContent && app.job_description && !atsScore && !atsLoading && (
@@ -563,21 +563,23 @@ export default function ApplicationDetailPage() {
                 )}
                 {app.cover_letter ? "Regenerate" : "Generate"}
               </Button>
-              {atsScore && (
-                <Button
-                  size="sm"
-                  onClick={handleGenerateWithAtsSuggestions}
-                  disabled={isGenerating || isGeneratingWithAts}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
-                >
-                  {isGeneratingWithAts ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Target className="h-4 w-4 mr-2" />
-                  )}
-                  With ATS
-                </Button>
-              )}
+              <Button
+                size="sm"
+                onClick={handleGenerateWithAtsSuggestions}
+                disabled={isGenerating || isGeneratingWithAts || !atsScore}
+                className={atsScore
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
+                  : "bg-slate-700 text-slate-400 cursor-not-allowed"
+                }
+                title={!atsScore ? "Calculate ATS score first" : undefined}
+              >
+                {isGeneratingWithAts ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Target className="h-4 w-4 mr-2" />
+                )}
+                With ATS
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
