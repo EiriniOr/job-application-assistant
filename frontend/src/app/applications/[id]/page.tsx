@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
 import { getApplication, updateApplication, deleteApplication, getResumeContent } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
-import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const STATUSES = [
@@ -31,6 +31,16 @@ export default function ApplicationDetailPage() {
   const [copied, setCopied] = useState(false);
   const [resumeContent, setResumeContent] = useState("");
   const [coverLetterLang, setCoverLetterLang] = useState<"en" | "sv">("en");
+  const [atsScore, setAtsScore] = useState<{
+    overallScore: number;
+    label: string;
+    breakdown: { similarity: number; keywordCoverage: number; softSkillsCoverage: number; impactScore: number };
+    missingKeywords: string[];
+    missingSoftSkills: string[];
+    suggestions: string[];
+  } | null>(null);
+  const [atsLoading, setAtsLoading] = useState(false);
+  const [atsExpanded, setAtsExpanded] = useState(false);
 
   // Load application from Supabase
   useEffect(() => {
@@ -117,6 +127,32 @@ export default function ApplicationDetailPage() {
       navigator.clipboard.writeText(app.cover_letter);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCalculateATS = async () => {
+    if (!app?.job_description || !resumeContent) return;
+
+    setAtsLoading(true);
+    try {
+      const response = await fetch("/api/ats-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: resumeContent,
+          jobDescription: app.job_description,
+          language: coverLetterLang,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setAtsScore(data);
+      }
+    } catch (error) {
+      console.error("ATS score error:", error);
+    } finally {
+      setAtsLoading(false);
     }
   };
 
@@ -216,6 +252,160 @@ export default function ApplicationDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* ATS Match Score */}
+        <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2 text-purple-200">
+              <Target className="h-4 w-4 text-fuchsia-400" />
+              ATS Match Score
+            </CardTitle>
+            <Button
+              size="sm"
+              onClick={handleCalculateATS}
+              disabled={atsLoading || !app.job_description || !resumeContent}
+              className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
+            >
+              {atsLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Target className="h-4 w-4 mr-2" />
+              )}
+              {atsScore ? "Recalculate" : "Calculate Match"}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {!resumeContent && (
+              <p className="text-sm text-purple-300">
+                Add your resume in the Resumes page to calculate your match score.
+              </p>
+            )}
+            {!app.job_description && resumeContent && (
+              <p className="text-sm text-purple-300">
+                No job description available for this application.
+              </p>
+            )}
+            {atsScore && (
+              <div className="space-y-4">
+                {/* Score Display */}
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`text-4xl font-bold ${
+                      atsScore.overallScore >= 70
+                        ? "text-emerald-400"
+                        : atsScore.overallScore >= 50
+                        ? "text-yellow-400"
+                        : "text-orange-400"
+                    }`}
+                  >
+                    {atsScore.overallScore}%
+                  </div>
+                  <div>
+                    <div
+                      className={`text-sm font-medium ${
+                        atsScore.overallScore >= 70
+                          ? "text-emerald-400"
+                          : atsScore.overallScore >= 50
+                          ? "text-yellow-400"
+                          : "text-orange-400"
+                      }`}
+                    >
+                      {atsScore.label}
+                    </div>
+                    <div className="text-xs text-purple-400">ATS Compatibility</div>
+                  </div>
+                </div>
+
+                {/* Breakdown */}
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex justify-between bg-slate-800/50 rounded px-3 py-2">
+                    <span className="text-purple-300">Keywords</span>
+                    <span className="text-white font-medium">{atsScore.breakdown.keywordCoverage}%</span>
+                  </div>
+                  <div className="flex justify-between bg-slate-800/50 rounded px-3 py-2">
+                    <span className="text-purple-300">Soft Skills</span>
+                    <span className="text-white font-medium">{atsScore.breakdown.softSkillsCoverage}%</span>
+                  </div>
+                  <div className="flex justify-between bg-slate-800/50 rounded px-3 py-2">
+                    <span className="text-purple-300">Similarity</span>
+                    <span className="text-white font-medium">{atsScore.breakdown.similarity}%</span>
+                  </div>
+                  <div className="flex justify-between bg-slate-800/50 rounded px-3 py-2">
+                    <span className="text-purple-300">Impact</span>
+                    <span className="text-white font-medium">{atsScore.breakdown.impactScore}%</span>
+                  </div>
+                </div>
+
+                {/* Expandable Details */}
+                <button
+                  onClick={() => setAtsExpanded(!atsExpanded)}
+                  className="flex items-center gap-1 text-sm text-fuchsia-400 hover:text-fuchsia-300"
+                >
+                  {atsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {atsExpanded ? "Hide details" : "Show suggestions & missing keywords"}
+                </button>
+
+                {atsExpanded && (
+                  <div className="space-y-3 pt-2 border-t border-purple-500/20">
+                    {/* Missing Keywords */}
+                    {atsScore.missingKeywords.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium text-purple-300 mb-1">Missing Keywords</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {atsScore.missingKeywords.map((kw) => (
+                            <span
+                              key={kw}
+                              className="px-2 py-0.5 text-xs bg-red-900/30 text-red-300 rounded"
+                            >
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Missing Soft Skills */}
+                    {atsScore.missingSoftSkills.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium text-purple-300 mb-1">Missing Soft Skills</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {atsScore.missingSoftSkills.map((skill) => (
+                            <span
+                              key={skill}
+                              className="px-2 py-0.5 text-xs bg-orange-900/30 text-orange-300 rounded"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Suggestions */}
+                    {atsScore.suggestions.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-medium text-purple-300 mb-1">Suggestions</h4>
+                        <ul className="space-y-1">
+                          {atsScore.suggestions.map((s, i) => (
+                            <li key={i} className="text-xs text-purple-200 flex items-start gap-2">
+                              <span className="text-fuchsia-400">•</span>
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {resumeContent && app.job_description && !atsScore && !atsLoading && (
+              <p className="text-sm text-purple-300">
+                Click &quot;Calculate Match&quot; to see how well your resume matches this job.
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Cover Letter Section */}
         <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
