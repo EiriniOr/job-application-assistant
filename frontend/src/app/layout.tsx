@@ -41,8 +41,8 @@ export default function RootLayout({
                 <Link href="/applications" className="px-4 py-2 rounded-lg text-sm font-medium text-purple-200 hover:text-white hover:bg-purple-500/20 transition-colors">
                   Applications
                 </Link>
-                <Link href="/resumes" className="px-4 py-2 rounded-lg text-sm font-medium text-purple-200 hover:text-white hover:bg-purple-500/20 transition-colors">
-                  Resumes
+                <Link href="/my-page" className="px-4 py-2 rounded-lg text-sm font-medium text-purple-200 hover:text-white hover:bg-purple-500/20 transition-colors">
+                  My Page
                 </Link>
                 <div className="ml-4 pl-4 border-l border-purple-500/30">
                   <UserButton />

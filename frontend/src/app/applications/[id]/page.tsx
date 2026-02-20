@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
-import { getApplication, updateApplication, deleteApplication, getResumeContent } from "@/lib/supabase-storage";
+import { getApplication, updateApplication, deleteApplication, getResumeContent, getCustomInstructions } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
 import { ArrowLeft, ArrowRight, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp, Wand2, X, Download } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -49,15 +49,18 @@ export default function ApplicationDetailPage() {
   const [improvedResumeCopied, setImprovedResumeCopied] = useState(false);
   const [isGeneratingWithAts, setIsGeneratingWithAts] = useState(false);
   const [newAtsScore, setNewAtsScore] = useState<number | null>(null);
+  const [customInstructions, setCustomInstructions] = useState("");
 
   // Load application from Supabase
   useEffect(() => {
     if (id) {
       Promise.all([
         getApplication(id),
-        getResumeContent()
-      ]).then(([stored, resume]) => {
+        getResumeContent(),
+        getCustomInstructions()
+      ]).then(([stored, resume, instructions]) => {
         setApp(stored);
+        setCustomInstructions(instructions);
         setNotes(stored?.notes || "");
         setResumeContent(resume);
         setIsLoading(false);
@@ -109,6 +112,7 @@ export default function ApplicationDetailPage() {
           jobDescription: app.job_description,
           resumeInfo: resumeContent,
           language: coverLetterLang,
+          customInstructions,
         }),
       });
 
@@ -335,6 +339,7 @@ export default function ApplicationDetailPage() {
           jobDescription: app.job_description,
           resumeInfo: resumeContent,
           language: coverLetterLang,
+          customInstructions,
           atsSuggestions: {
             missingKeywords: atsScore.missingKeywords,
             missingSoftSkills: atsScore.missingSoftSkills,

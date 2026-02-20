@@ -185,3 +185,44 @@ export async function saveResumeContent(content: string): Promise<boolean> {
 
   return true;
 }
+
+// Custom instructions for cover letter generation
+export async function getCustomInstructions(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return "";
+
+  const { data, error } = await supabase
+    .from("user_settings")
+    .select("cover_letter_instructions")
+    .eq("user_id", user.id)
+    .single();
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Error fetching instructions:", error);
+    return "";
+  }
+
+  return data?.cover_letter_instructions || "";
+}
+
+export async function saveCustomInstructions(instructions: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from("user_settings")
+    .upsert({
+      user_id: user.id,
+      cover_letter_instructions: instructions,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: "user_id",
+    });
+
+  if (error) {
+    console.error("Error saving instructions:", error);
+    return false;
+  }
+
+  return true;
+}

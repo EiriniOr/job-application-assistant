@@ -7,7 +7,7 @@ const anthropic = new Anthropic({
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobTitle, company, jobDescription, resumeInfo, language = "en", atsSuggestions } = await request.json();
+    const { jobTitle, company, jobDescription, resumeInfo, language = "en", atsSuggestions, customInstructions } = await request.json();
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
@@ -61,7 +61,7 @@ INSTRUKTIONER FÖR ATT LÅTA MÄNSKLIG (INTE AI-GENERERAD):
 
 4. AVSLUTNING:
    - "Jag ser fram emot att diskutera hur jag kan bidra till [företagsnamn], och tack för att ni överväger min ansökan."
-   - Skriv under med "Med vänlig hälsning," och [förnamn efternamn]
+   - VIKTIGT: Avsluta ALLTID med exakt "Med vänlig hälsning," följt av [förnamn efternamn]. ALDRIG "Tack så mycket" eller "Vänliga hälsningar".
 
 5. TON:
    - Skriv som en riktig person, inte som en AI
@@ -112,7 +112,28 @@ INSTRUCTIONS TO SOUND HUMAN (NOT AI-GENERATED):
 
 Return ONLY the cover letter text. No commentary.`;
 
-    const prompt = language === "sv" ? swedishPrompt : englishPrompt;
+    // If custom instructions provided, use simplified prompt with user's instructions
+    let prompt: string;
+    if (customInstructions && customInstructions.trim()) {
+      const customPrompt = `You are an expert career coach writing a cover letter.
+
+${jobDetails}
+
+USER'S CUSTOM INSTRUCTIONS (follow these carefully):
+${customInstructions}
+
+ADDITIONAL REQUIREMENTS:
+- Write in ${language === "sv" ? "Swedish" : "English"}
+- Length: 250-350 words
+- ${language === "sv" ? 'ALWAYS end with "Med vänlig hälsning," followed by the name' : 'End with "Best regards," followed by the name'}
+- Sound human and natural, not like AI
+- Only mention skills/experience that are truthfully in the resume
+
+Return ONLY the cover letter text. No commentary.`;
+      prompt = customPrompt;
+    } else {
+      prompt = language === "sv" ? swedishPrompt : englishPrompt;
+    }
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
