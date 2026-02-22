@@ -19,12 +19,12 @@ import { Building2 } from "lucide-react";
 import type { Application } from "@/lib/api";
 
 const COLUMNS = [
-  { id: "saved", title: "Saved", color: "bg-slate-800/50 border border-slate-600/30", hoverColor: "bg-slate-700/50 border border-slate-500/40" },
-  { id: "applied", title: "Applied", color: "bg-violet-900/30 border border-violet-500/30", hoverColor: "bg-violet-800/40 border border-violet-400/40" },
-  { id: "phone_screen", title: "Phone Screen", color: "bg-fuchsia-900/30 border border-fuchsia-500/30", hoverColor: "bg-fuchsia-800/40 border border-fuchsia-400/40" },
-  { id: "interview", title: "Interview", color: "bg-cyan-900/30 border border-cyan-500/30", hoverColor: "bg-cyan-800/40 border border-cyan-400/40" },
-  { id: "offer", title: "Offer", color: "bg-emerald-900/30 border border-emerald-500/30", hoverColor: "bg-emerald-800/40 border border-emerald-400/40" },
-  { id: "rejected", title: "Rejected", color: "bg-red-900/30 border border-red-500/30", hoverColor: "bg-red-800/40 border border-red-400/40" },
+  { id: "saved", title: "Saved", color: "bg-slate-800/70 border border-slate-600/50", hoverColor: "bg-slate-700/80 border border-slate-500/60" },
+  { id: "applied", title: "Applied", color: "bg-violet-900/50 border border-violet-500/50", hoverColor: "bg-violet-800/60 border border-violet-400/60" },
+  { id: "phone_screen", title: "Phone Screen", color: "bg-fuchsia-900/50 border border-fuchsia-500/50", hoverColor: "bg-fuchsia-800/60 border border-fuchsia-400/60" },
+  { id: "interview", title: "Interview", color: "bg-cyan-900/50 border border-cyan-500/50", hoverColor: "bg-cyan-800/60 border border-cyan-400/60" },
+  { id: "offer", title: "Offer", color: "bg-emerald-900/50 border border-emerald-500/50", hoverColor: "bg-emerald-800/60 border border-emerald-400/60" },
+  { id: "rejected", title: "Rejected", color: "bg-red-900/50 border border-red-500/50", hoverColor: "bg-red-800/60 border border-red-400/60" },
 ];
 
 interface KanbanBoardProps {

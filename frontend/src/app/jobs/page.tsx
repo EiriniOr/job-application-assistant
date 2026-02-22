@@ -30,6 +30,7 @@ export default function JobsPage() {
   const [jobUrl, setJobUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -105,6 +106,8 @@ export default function JobsPage() {
       await handleSaveJob(job);
       setShowAddModal(false);
       setJobUrl("");
+      setSuccessMessage("Job ad successfully added to Saved in the Applications tab!");
+      setTimeout(() => setSuccessMessage(null), 5000);
     } catch (e) {
       setExtractError(e instanceof Error ? e.message : "Failed to extract job");
     } finally {
@@ -143,6 +146,14 @@ export default function JobsPage() {
             Add Job via URL
           </Button>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="p-3 bg-emerald-900/40 border border-emerald-500/50 rounded-lg text-emerald-300 text-sm flex items-center gap-2">
+            <Check className="h-4 w-4" />
+            {successMessage}
+          </div>
+        )}
 
         {/* Source Selection */}
         <div className="flex flex-wrap gap-2 items-center">
