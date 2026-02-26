@@ -205,6 +205,73 @@ export async function getCustomInstructions(): Promise<string> {
   return data?.cover_letter_instructions || "";
 }
 
+// CV File storage (Supabase Storage bucket: cv-files)
+export async function uploadCVFile(file: File): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const ext = file.name.split(".").pop();
+  const path = `${user.id}/cv.${ext}`;
+
+  // Remove existing file first (upsert)
+  await supabase.storage.from("cv-files").remove([path]);
+
+  const { error } = await supabase.storage.from("cv-files").upload(path, file, {
+    contentType: file.type,
+  });
+
+  if (error) {
+    console.error("Error uploading CV file:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function getCVFileMeta(): Promise<{ name: string; path: string } | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase.storage.from("cv-files").list(user.id);
+  if (error || !data?.length) return null;
+
+  const file = data.find(f => f.name.startsWith("cv."));
+  if (!file) return null;
+
+  return { name: file.name, path: `${user.id}/${file.name}` };
+}
+
+export async function downloadCVFile(): Promise<void> {
+  const meta = await getCVFileMeta();
+  if (!meta) return;
+
+  const { data, error } = await supabase.storage.from("cv-files").download(meta.path);
+  if (error || !data) {
+    console.error("Error downloading CV file:", error);
+    return;
+  }
+
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = meta.name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function deleteCVFile(): Promise<boolean> {
+  const meta = await getCVFileMeta();
+  if (!meta) return false;
+
+  const { error } = await supabase.storage.from("cv-files").remove([meta.path]);
+  if (error) {
+    console.error("Error deleting CV file:", error);
+    return false;
+  }
+
+  return true;
+}
+
 export async function saveCustomInstructions(instructions: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;

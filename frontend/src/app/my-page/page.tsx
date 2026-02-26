@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
-import { getResumeContent, saveResumeContent, getCustomInstructions, saveCustomInstructions } from "@/lib/supabase-storage";
-import { Loader2, Save, Sparkles, FileText, MessageSquare, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { getResumeContent, saveResumeContent, getCustomInstructions, saveCustomInstructions, uploadCVFile, getCVFileMeta, downloadCVFile, deleteCVFile } from "@/lib/supabase-storage";
+import { Loader2, Save, Sparkles, FileText, MessageSquare, ChevronDown, ChevronUp, Download, Upload, Trash2 } from "lucide-react";
 import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
+import { useRef } from "react";
 
 const DEFAULT_INSTRUCTIONS_PREVIEW = `Default AI behavior (used when no custom instructions provided):
 
@@ -78,17 +79,39 @@ export default function MyPage() {
   const [savingResume, setSavingResume] = useState(false);
   const [savingInstructions, setSavingInstructions] = useState(false);
   const [showDefaultInstructions, setShowDefaultInstructions] = useState(false);
+  const [cvFile, setCvFile] = useState<{ name: string; path: string } | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load content from Supabase
   useEffect(() => {
-    Promise.all([getResumeContent(), getCustomInstructions()]).then(
-      ([resume, instructions]) => {
+    Promise.all([getResumeContent(), getCustomInstructions(), getCVFileMeta()]).then(
+      ([resume, instructions, fileMeta]) => {
         setResumeText(resume);
         setCustomInstructions(instructions);
+        setCvFile(fileMeta);
         setIsLoading(false);
       }
     );
   }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFile(true);
+    const ok = await uploadCVFile(file);
+    if (ok) {
+      const meta = await getCVFileMeta();
+      setCvFile(meta);
+    }
+    setUploadingFile(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDeleteFile = async () => {
+    const ok = await deleteCVFile();
+    if (ok) setCvFile(null);
+  };
 
   const handleSaveResumeText = async () => {
     setSavingResume(true);
@@ -131,6 +154,68 @@ export default function MyPage() {
             Your resume and personalized AI settings
           </p>
         </div>
+
+        {/* CV File Upload */}
+        <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2 text-purple-200">
+              <FileText className="h-4 w-4 text-fuchsia-400" />
+              CV File
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-purple-300">
+              Upload your CV as a PDF or Word file to preserve formatting, hyperlinks and structure.
+            </p>
+            {cvFile ? (
+              <div className="flex items-center gap-3 p-3 bg-slate-800/50 border border-purple-500/20 rounded-lg">
+                <FileText className="h-5 w-5 text-fuchsia-400 shrink-0" />
+                <span className="text-sm text-white flex-1 truncate">{cvFile.name}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={downloadCVFile}
+                  className="border-cyan-400/50 text-cyan-200 hover:bg-cyan-500/20 hover:text-white shrink-0"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDeleteFile}
+                  className="border-red-500/50 text-red-400 hover:bg-red-500/20 hover:text-white shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-purple-400 italic">No file uploaded yet.</p>
+            )}
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingFile}
+                className="border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-500/20 hover:text-white"
+              >
+                {uploadingFile ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Upload className="h-4 w-4 mr-2" />
+                )}
+                {cvFile ? "Replace File" : "Upload CV File"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Resume Content */}
         <Card className="border border-purple-500/30 shadow-md shadow-purple-500/10 bg-slate-900/50 backdrop-blur">
