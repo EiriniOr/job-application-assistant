@@ -21,7 +21,7 @@ const ATS_RULES = `
 
 export async function POST(request: NextRequest) {
   try {
-    const { resumeText, jobDescription, missingKeywords, missingSoftSkills, suggestions, language = "en" } = await request.json();
+    const { resumeText, jobDescription, missingKeywords, missingSoftSkills, suggestions, outputLanguage } = await request.json();
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
@@ -36,6 +36,31 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Detect if job description is in a different language than CV
+    const detectLang = (text: string): "en" | "sv" => {
+      const lower = text.toLowerCase();
+      const svWords = ["och", "att", "som", "för", "med", "är", "har", "erfarenhet", "arbete"];
+      const enWords = ["and", "the", "that", "for", "with", "is", "have", "experience", "work"];
+      let sv = 0, en = 0;
+      for (const w of svWords) if (lower.includes(` ${w} `)) sv++;
+      for (const w of enWords) if (lower.includes(` ${w} `)) en++;
+      return sv > en ? "sv" : "en";
+    };
+
+    const jdLang = detectLang(jobDescription);
+    const cvLang = detectLang(resumeText);
+    // outputLanguage explicitly overrides; otherwise keep CV in original language
+    const targetLang: "en" | "sv" = outputLanguage === "sv" ? "sv" : outputLanguage === "en" ? "en" : cvLang;
+    const crossLanguage = jdLang !== targetLang;
+    const translating = cvLang !== targetLang;
+
+    const crossLanguageInstructions = (crossLanguage || translating) ? `
+LANGUAGE INSTRUCTIONS:
+${translating ? `- TRANSLATE the CV from ${cvLang === "sv" ? "Swedish" : "English"} to ${targetLang === "sv" ? "Swedish" : "English"}` : ""}
+${crossLanguage ? `- The job description is in ${jdLang === "sv" ? "Swedish" : "English"} — translate and incorporate its keywords into ${targetLang === "sv" ? "Swedish" : "English"}` : ""}
+- The missing keywords may show format "swedish (english)" — use the ${targetLang === "sv" ? "Swedish" : "English"} version
+` : "";
 
     const prompt = `You are an expert CV editor optimizing resumes for ATS (Applicant Tracking Systems).
 
@@ -59,9 +84,9 @@ ${missingSoftSkills?.join(", ") || "None"}
 
 SPECIFIC SUGGESTIONS:
 ${suggestions?.join("\n") || "None"}
-
+${crossLanguageInstructions}
 CRITICAL INSTRUCTIONS:
-1. Keep the CV in ${language === "sv" ? "Swedish" : "English"}
+1. Write the CV in ${targetLang === "sv" ? "Swedish" : "English"}
 2. DO NOT invent skills, experience, or technologies not already in the CV
 3. Preserve ALL roles, dates, employers, education from the original
 4. Apply the 10 ATS rules above to optimize structure and content

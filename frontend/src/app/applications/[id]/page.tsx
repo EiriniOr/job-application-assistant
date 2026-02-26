@@ -9,7 +9,7 @@ import { getApplication, updateApplication, deleteApplication, getResumeContent,
 import type { Application } from "@/lib/api";
 import { ArrowLeft, ArrowRight, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp, Wand2, X, Download } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle } from "docx";
+import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
 import { saveAs } from "file-saver";
 
 const STATUSES = [
@@ -50,6 +50,7 @@ export default function ApplicationDetailPage() {
   const [isGeneratingWithAts, setIsGeneratingWithAts] = useState(false);
   const [newAtsScore, setNewAtsScore] = useState<number | null>(null);
   const [customInstructions, setCustomInstructions] = useState("");
+  const [cvOutputLang, setCvOutputLang] = useState<"en" | "sv">("en");
 
   // Load application from Supabase
   useEffect(() => {
@@ -183,7 +184,7 @@ export default function ApplicationDetailPage() {
           missingKeywords: atsScore.missingKeywords,
           missingSoftSkills: atsScore.missingSoftSkills,
           suggestions: atsScore.suggestions,
-          language: coverLetterLang,
+          outputLanguage: cvOutputLang,
         }),
       });
 
@@ -608,22 +609,46 @@ export default function ApplicationDetailPage() {
                 )}
 
                 {/* Generate Improved CV Button - Always visible after ATS calculation */}
-                <div className="pt-3 border-t border-purple-500/20">
-                  <Button
-                    size="sm"
-                    onClick={handleGenerateImprovedResume}
-                    disabled={improvedResumeLoading}
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
-                  >
-                    {improvedResumeLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <Wand2 className="h-4 w-4 mr-2" />
-                    )}
-                    Generate Improved CV
-                  </Button>
-                  <p className="text-xs text-purple-400 mt-1">
-                    AI will rewrite your CV incorporating missing keywords (truthfully)
+                <div className="pt-3 border-t border-purple-500/20 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex rounded-md overflow-hidden border border-purple-400/50">
+                      <button
+                        onClick={() => setCvOutputLang("en")}
+                        className={`px-3 py-1 text-xs font-medium transition-colors ${
+                          cvOutputLang === "en"
+                            ? "bg-cyan-600 text-white"
+                            : "bg-slate-800 text-purple-300 hover:bg-cyan-500/20"
+                        }`}
+                      >
+                        EN
+                      </button>
+                      <button
+                        onClick={() => setCvOutputLang("sv")}
+                        className={`px-3 py-1 text-xs font-medium transition-colors ${
+                          cvOutputLang === "sv"
+                            ? "bg-cyan-600 text-white"
+                            : "bg-slate-800 text-purple-300 hover:bg-cyan-500/20"
+                        }`}
+                      >
+                        SV
+                      </button>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleGenerateImprovedResume}
+                      disabled={improvedResumeLoading}
+                      className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-md shadow-cyan-500/25"
+                    >
+                      {improvedResumeLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Wand2 className="h-4 w-4 mr-2" />
+                      )}
+                      Generate Improved CV
+                    </Button>
+                  </div>
+                  <p className="text-xs text-purple-400">
+                    AI will rewrite your CV in {cvOutputLang === "sv" ? "Swedish" : "English"}, incorporating missing keywords (truthfully)
                   </p>
                 </div>
               </div>

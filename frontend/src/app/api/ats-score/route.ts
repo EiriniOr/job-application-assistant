@@ -1,4 +1,80 @@
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
+
+// Simple language detection based on common words
+function detectLanguage(text: string): "en" | "sv" {
+  const lower = text.toLowerCase();
+  const svIndicators = ["och", "att", "som", "för", "med", "är", "har", "kan", "ska", "på", "vi", "du", "av", "till", "erfarenhet", "arbete", "utveckling"];
+  const enIndicators = ["and", "the", "that", "for", "with", "is", "have", "can", "will", "to", "we", "you", "of", "experience", "work", "development"];
+
+  let svCount = 0;
+  let enCount = 0;
+
+  for (const word of svIndicators) {
+    const regex = new RegExp(`\\b${word}\\b`, "gi");
+    svCount += (lower.match(regex) || []).length;
+  }
+
+  for (const word of enIndicators) {
+    const regex = new RegExp(`\\b${word}\\b`, "gi");
+    enCount += (lower.match(regex) || []).length;
+  }
+
+  return svCount > enCount ? "sv" : "en";
+}
+
+// Translate keywords using Claude when languages mismatch
+async function translateKeywords(keywords: string[], fromLang: "sv" | "en", toLang: "sv" | "en"): Promise<Map<string, string>> {
+  const translations = new Map<string, string>();
+
+  if (fromLang === toLang || keywords.length === 0) {
+    for (const kw of keywords) {
+      translations.set(kw, kw);
+    }
+    return translations;
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    // Fallback: return original keywords
+    for (const kw of keywords) {
+      translations.set(kw, kw);
+    }
+    return translations;
+  }
+
+  try {
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const fromName = fromLang === "sv" ? "Swedish" : "English";
+    const toName = toLang === "sv" ? "Swedish" : "English";
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      messages: [{
+        role: "user",
+        content: `Translate these ${fromName} job-related keywords to ${toName}. Return ONLY a JSON object where keys are original words and values are translations. Keep technical terms (Python, React, etc.) unchanged.
+
+Keywords: ${keywords.join(", ")}
+
+Return valid JSON only, no explanation.`
+      }]
+    });
+
+    const content = response.content[0].type === "text" ? response.content[0].text : "";
+    const parsed = JSON.parse(content);
+
+    for (const kw of keywords) {
+      translations.set(kw, parsed[kw] || kw);
+    }
+  } catch {
+    // Fallback on error
+    for (const kw of keywords) {
+      translations.set(kw, kw);
+    }
+  }
+
+  return translations;
+}
 
 // Stopwords for English and Swedish
 const STOP_EN = new Set([
@@ -81,7 +157,8 @@ function clean(text: string): string {
   if (!text) return "";
   return text
     .toLowerCase()
-    .replace(/[^\w+#.\-_/()%\s]/gu, " ")
+    // Preserve Swedish/Nordic characters (å, ä, ö, etc.) along with standard word chars
+    .replace(/[^\p{L}\p{N}+#.\-_/()%\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -111,7 +188,8 @@ function tokenize(text: string, language: string): string[] {
   if (!text) return [];
   const stop = getStopwords(language);
   const cleaned = text.replace(/[.,;:!?"'"']/g, " ");
-  const tokens = cleaned.toLowerCase().match(/[\w#+\-_/()%]{2,}/gu) || [];
+  // Use Unicode property escapes to match letters from any language including Swedish å, ä, ö
+  const tokens = cleaned.toLowerCase().match(/[\p{L}\p{N}#+\-_/()%]{2,}/gu) || [];
   return tokens.filter((w) => !stop.has(w));
 }
 
@@ -194,7 +272,7 @@ interface ATSScoreResult {
 
 export async function POST(request: NextRequest): Promise<NextResponse<ATSScoreResult | { error: string }>> {
   try {
-    const { resumeText, jobDescription, language = "en" } = await request.json();
+    const { resumeText, jobDescription, language } = await request.json();
 
     if (!resumeText || !jobDescription) {
       return NextResponse.json(
@@ -203,35 +281,77 @@ export async function POST(request: NextRequest): Promise<NextResponse<ATSScoreR
       );
     }
 
-    const lang = language === "sv" ? "sv" : "en";
     const jdClean = clean(jobDescription);
     const cvClean = clean(resumeText);
 
-    // Extract keywords from job description
-    const jdKeywords = extractKeywords(jdClean, lang);
+    // Detect languages separately for JD and CV - always detect from actual text
+    // The `language` param is for output preference, not for forcing detection
+    const jdLang = detectLanguage(jobDescription);
+    const cvLang = detectLanguage(resumeText);
+    const crossLanguage = jdLang !== cvLang;
 
-    // Tokenize CV
-    const cvTokens = tokenize(cvClean, lang);
-    const cvTokensNorm = new Set(cvTokens.map((t) => normalizeWord(t, lang)));
+    // Extract keywords from job description using JD's language
+    const jdKeywords = extractKeywords(jdClean, jdLang);
 
-    // Keyword coverage
-    const { present: presentKeywords, missing: missingKeywords } = computeCoverage(
-      jdKeywords,
-      cvTokensNorm,
-      lang
-    );
+    // Tokenize CV using CV's language
+    const cvTokens = tokenize(cvClean, cvLang);
+    const cvTokensNorm = new Set(cvTokens.map((t) => normalizeWord(t, cvLang)));
+
+    // If cross-language, translate JD keywords to CV language for matching
+    let keywordsToMatch = jdKeywords;
+    let keywordTranslations: Map<string, string> | null = null;
+
+    if (crossLanguage) {
+      keywordTranslations = await translateKeywords(jdKeywords, jdLang, cvLang);
+      keywordsToMatch = jdKeywords.map(kw => keywordTranslations!.get(kw) || kw);
+    }
+
+    // Keyword coverage - match translated keywords against CV
+    const presentKeywords: string[] = [];
+    const missingKeywords: string[] = [];
+
+    for (let i = 0; i < jdKeywords.length; i++) {
+      const originalKw = jdKeywords[i];
+      const matchKw = keywordsToMatch[i];
+      const norm = normalizeWord(matchKw, cvLang);
+
+      if (cvTokensNorm.has(norm)) {
+        presentKeywords.push(originalKw);
+      } else {
+        // For missing keywords in cross-language, show both original and translation
+        if (crossLanguage && keywordTranslations && keywordTranslations.get(originalKw) !== originalKw) {
+          missingKeywords.push(`${originalKw} (${keywordTranslations.get(originalKw)})`);
+        } else {
+          missingKeywords.push(originalKw);
+        }
+      }
+    }
     const keywordCoverage = jdKeywords.length > 0 ? presentKeywords.length / jdKeywords.length : 0;
 
-    // Soft skills
-    const jdSoftSkills = detectSoftSkills(jdClean, lang);
-    const cvSoftSkills = detectSoftSkills(cvClean, lang);
-    const presentSoftSkills = jdSoftSkills.filter((s) => cvSoftSkills.includes(s));
-    const missingSoftSkills = jdSoftSkills.filter((s) => !cvSoftSkills.includes(s));
-    const softSkillsCoverage = jdSoftSkills.length > 0 ? presentSoftSkills.length / jdSoftSkills.length : 0;
+    // Soft skills - detect in both languages and merge
+    const jdSoftSkillsSv = detectSoftSkills(jdClean, "sv");
+    const jdSoftSkillsEn = detectSoftSkills(jdClean, "en");
+    const cvSoftSkillsSv = detectSoftSkills(cvClean, "sv");
+    const cvSoftSkillsEn = detectSoftSkills(cvClean, "en");
 
-    // Content similarity
-    const jdTokens = tokenize(jdClean, lang);
-    const similarity = computeSimilarity(jdTokens, cvTokens);
+    // Combine soft skills from both languages
+    const jdSoftSkillsAll = [...new Set([...jdSoftSkillsSv, ...jdSoftSkillsEn])];
+    const cvSoftSkillsAll = [...new Set([...cvSoftSkillsSv, ...cvSoftSkillsEn])];
+
+    const presentSoftSkills = jdSoftSkillsAll.filter((s) => cvSoftSkillsAll.includes(s));
+    const missingSoftSkills = jdSoftSkillsAll.filter((s) => !cvSoftSkillsAll.includes(s));
+    const softSkillsCoverage = jdSoftSkillsAll.length > 0 ? presentSoftSkills.length / jdSoftSkillsAll.length : 0;
+
+    // Content similarity - use translated tokens for cross-language
+    const jdTokens = tokenize(jdClean, jdLang);
+    let jdTokensForSimilarity = jdTokens;
+
+    if (crossLanguage && keywordTranslations) {
+      // Translate JD tokens for similarity computation
+      jdTokensForSimilarity = jdTokens.map(t => keywordTranslations!.get(t) || t);
+    }
+
+    const similarity = computeSimilarity(jdTokensForSimilarity, cvTokens);
 
     // Impact signals
     const impactCount = countImpactSignals(cvClean);

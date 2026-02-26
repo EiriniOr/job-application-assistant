@@ -21,7 +21,7 @@ import type { Application } from "@/lib/api";
 const COLUMNS = [
   { id: "saved", title: "Saved", color: "bg-slate-800/90 border border-slate-600/70", hoverColor: "bg-slate-700 border border-slate-500/80" },
   { id: "applied", title: "Applied", color: "bg-violet-900/80 border border-violet-500/70", hoverColor: "bg-violet-800/90 border border-violet-400/80" },
-  { id: "phone_screen", title: "Phone Screen", color: "bg-fuchsia-900/80 border border-fuchsia-500/70", hoverColor: "bg-fuchsia-800/90 border border-fuchsia-400/80" },
+  { id: "phone_screen", title: "Assessment Tests", color: "bg-fuchsia-900/80 border border-fuchsia-500/70", hoverColor: "bg-fuchsia-800/90 border border-fuchsia-400/80" },
   { id: "interview", title: "Interview", color: "bg-cyan-900/80 border border-cyan-500/70", hoverColor: "bg-cyan-800/90 border border-cyan-400/80" },
   { id: "offer", title: "Offer", color: "bg-emerald-900/80 border border-emerald-500/70", hoverColor: "bg-emerald-800/90 border border-emerald-400/80" },
   { id: "rejected", title: "Rejected", color: "bg-red-900/80 border border-red-500/70", hoverColor: "bg-red-800/90 border border-red-400/80" },

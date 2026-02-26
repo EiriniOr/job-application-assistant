@@ -26,11 +26,29 @@ IMPORTANT: Only mention skills/keywords that are TRUTHFULLY in the applicant's b
 Demonstrate soft skills through concrete examples from their experience.
 ` : "";
 
+    // Detect if job description language differs from requested output language
+    const detectLang = (text: string): "en" | "sv" => {
+      if (!text) return "en";
+      const lower = text.toLowerCase();
+      const svWords = ["och", "att", "som", "för", "med", "är", "har", "erfarenhet", "arbete"];
+      const enWords = ["and", "the", "that", "for", "with", "is", "have", "experience", "work"];
+      let sv = 0, en = 0;
+      for (const w of svWords) if (lower.includes(` ${w} `)) sv++;
+      for (const w of enWords) if (lower.includes(` ${w} `)) en++;
+      return sv > en ? "sv" : "en";
+    };
+
+    const jdLang = detectLang(jobDescription || "");
+    const outputLang = language === "sv" ? "sv" : "en";
+    const crossLanguageNote = jdLang !== outputLang
+      ? `\nNOTE: The job description is in ${jdLang === "sv" ? "Swedish" : "English"} but write the cover letter in ${outputLang === "sv" ? "Swedish" : "English"}. Understand the job requirements and write appropriately.`
+      : "";
+
     const jobDetails = `JOB DETAILS:
 - Position: ${jobTitle}
 - Company: ${company}
 - Job Description: ${jobDescription || "Not provided"}
-
+${crossLanguageNote}
 ${resumeInfo ? `APPLICANT'S RESUME/BACKGROUND:\n${resumeInfo}` : ""}
 ${atsSection}`;
 
