@@ -729,18 +729,23 @@ export default function Dashboard() {
               From raw CV to tailored application — search, score, rewrite, and track every job in one streamlined workspace.
             </p>
             {!user && (
-              <div className="flex gap-3 flex-wrap pt-1">
-                <Link href="/login">
-                  <Button className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold px-6 py-3 shadow-lg shadow-purple-500/30 hover:-translate-y-0.5 transition-all">
-                    <Rocket className="h-4 w-4 mr-2" />
-                    Get Started Free
-                  </Button>
-                </Link>
-                <Link href="/jobs">
-                  <Button variant="outline" className="border-purple-400/40 text-purple-200 hover:bg-purple-500/10 hover:text-white px-6 py-3 transition-all">
-                    Browse Jobs
-                  </Button>
-                </Link>
+              <div className="space-y-3 pt-1">
+                <div className="flex gap-3 flex-wrap">
+                  <Link href="/login">
+                    <Button className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold px-6 py-3 shadow-lg shadow-purple-500/30 hover:-translate-y-0.5 transition-all">
+                      <Rocket className="h-4 w-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link href="/jobs">
+                    <Button variant="outline" className="border-purple-400/40 text-purple-200 hover:bg-purple-500/10 hover:text-white px-6 py-3 transition-all">
+                      Browse Jobs
+                    </Button>
+                  </Link>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
+                  * Access is by invitation only. The app runs on personal API infrastructure — operating costs prevent open public access.
+                </p>
               </div>
             )}
           </div>
@@ -841,14 +846,17 @@ export default function Dashboard() {
               Ready to streamline your job hunt?
             </h2>
             <p className="text-purple-300 max-w-md mx-auto">
-              Free to use. No credit card required.
+              Request access and get your own invite.
             </p>
             <Link href="/login">
               <Button className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold px-8 py-3 shadow-lg shadow-purple-500/30 hover:-translate-y-0.5 transition-all">
                 <Rocket className="h-4 w-4 mr-2" />
-                Start for Free
+                Sign In
               </Button>
             </Link>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              * Access is by invitation only — the app runs on personal API infrastructure and isn&apos;t open to the public.
+            </p>
           </div>
         </>
       )}
