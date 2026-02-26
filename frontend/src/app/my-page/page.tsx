@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
 import { getResumeContent, saveResumeContent, getCustomInstructions, saveCustomInstructions, uploadCVFile, getCVFileMeta, downloadCVFile, deleteCVFile } from "@/lib/supabase-storage";
 import { Loader2, Save, Sparkles, FileText, MessageSquare, ChevronDown, ChevronUp, Download, Upload, Trash2 } from "lucide-react";
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
-import { saveAs } from "file-saver";
+import { downloadBeautifulCV } from "@/lib/cv-docx";
 import { useRef } from "react";
 
 const DEFAULT_INSTRUCTIONS_PREVIEW = `Default AI behavior (used when no custom instructions provided):
@@ -19,56 +18,6 @@ const DEFAULT_INSTRUCTIONS_PREVIEW = `Default AI behavior (used when no custom i
 • Tone: Direct, specific, human-sounding - avoid corporate buzzwords
 • Length: 250-350 words`;
 
-function downloadResumeAsWord(text: string) {
-  const lines = text.split("\n");
-  const children: Paragraph[] = [];
-
-  const sectionHeaders = [
-    "summary", "profile", "profil", "sammanfattning",
-    "experience", "erfarenhet", "work experience", "arbetslivserfarenhet",
-    "education", "utbildning",
-    "skills", "färdigheter", "kompetenser", "tekniska färdigheter",
-    "certifications", "certifikat",
-    "projects", "projekt",
-    "languages", "språk",
-    "references", "referenser"
-  ];
-
-  let isFirstLine = true;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) { children.push(new Paragraph({ text: "" })); continue; }
-
-    const lowerLine = trimmed.toLowerCase();
-    const isSection = sectionHeaders.some(h =>
-      lowerLine === h || lowerLine.startsWith(h + ":") || lowerLine.startsWith(h + " ") || lowerLine.endsWith(" " + h)
-    );
-
-    if (isFirstLine) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trimmed, bold: true, size: 36, color: "1a1a1a" })],
-        spacing: { after: 200 },
-        alignment: AlignmentType.CENTER,
-      }));
-      isFirstLine = false;
-    } else if (isSection) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trimmed.toUpperCase(), bold: true, size: 24, color: "2563eb", underline: { type: "single", color: "2563eb" } })],
-        spacing: { before: 300, after: 100 },
-        border: { bottom: { color: "e5e7eb", space: 1, style: BorderStyle.SINGLE, size: 6 } },
-      }));
-    } else {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trimmed, size: 22 })],
-        spacing: { after: 80 },
-      }));
-    }
-  }
-
-  const doc = new Document({ sections: [{ properties: {}, children }] });
-  Packer.toBlob(doc).then(blob => saveAs(blob, "My_CV.docx"));
-}
 
 export default function MyPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -250,7 +199,7 @@ export default function MyPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => downloadResumeAsWord(resumeText)}
+                onClick={() => downloadBeautifulCV(resumeText, { companyName: "My_CV" })}
                 disabled={!resumeText}
                 className="border-cyan-400/50 text-cyan-200 hover:bg-cyan-500/20 hover:text-white"
               >

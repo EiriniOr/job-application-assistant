@@ -5,12 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AuthGuard } from "@/components/auth-guard";
-import { getApplication, updateApplication, deleteApplication, getResumeContent, getCustomInstructions } from "@/lib/supabase-storage";
+import { getApplication, updateApplication, deleteApplication, getResumeContent, getCustomInstructions, getCVFileBlob } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
 import { ArrowLeft, ArrowRight, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp, Wand2, X, Download } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle } from "docx";
-import { saveAs } from "file-saver";
+import { downloadBeautifulCV } from "@/lib/cv-docx";
 
 const STATUSES = [
   "saved",
@@ -222,106 +221,12 @@ export default function ApplicationDetailPage() {
   };
 
   const handleDownloadWord = async () => {
-    // Parse the resume into sections
-    const lines = improvedResume.split("\n");
-    const children: Paragraph[] = [];
-
-    // Common section headers to detect
-    const sectionHeaders = [
-      "summary", "profile", "profil", "sammanfattning",
-      "experience", "erfarenhet", "work experience", "arbetslivserfarenhet",
-      "education", "utbildning",
-      "skills", "färdigheter", "kompetenser", "tekniska färdigheter",
-      "certifications", "certifikat",
-      "projects", "projekt",
-      "languages", "språk",
-      "references", "referenser"
-    ];
-
-    let isFirstLine = true;
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) {
-        children.push(new Paragraph({ text: "" }));
-        continue;
-      }
-
-      const lowerLine = trimmed.toLowerCase();
-      const isSection = sectionHeaders.some(h =>
-        lowerLine === h ||
-        lowerLine.startsWith(h + ":") ||
-        lowerLine.startsWith(h + " ") ||
-        lowerLine.endsWith(" " + h)
-      );
-
-      if (isFirstLine) {
-        // First line is the name - large and bold
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: trimmed,
-                bold: true,
-                size: 36, // 18pt
-                color: "1a1a1a",
-              }),
-            ],
-            spacing: { after: 200 },
-            alignment: AlignmentType.CENTER,
-          })
-        );
-        isFirstLine = false;
-      } else if (isSection) {
-        // Section header - blue, underlined, slightly larger
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: trimmed.toUpperCase(),
-                bold: true,
-                size: 24, // 12pt
-                color: "2563eb", // blue-600
-                underline: { type: "single", color: "2563eb" },
-              }),
-            ],
-            spacing: { before: 300, after: 100 },
-            border: {
-              bottom: {
-                color: "e5e7eb",
-                space: 1,
-                style: BorderStyle.SINGLE,
-                size: 6,
-              },
-            },
-          })
-        );
-      } else {
-        // Regular content
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: trimmed,
-                size: 22, // 11pt
-              }),
-            ],
-            spacing: { after: 80 },
-          })
-        );
-      }
-    }
-
-    const doc = new Document({
-      sections: [{
-        properties: {},
-        children,
-      }],
+    const original = await getCVFileBlob();
+    const isDocx = original?.name.endsWith(".docx");
+    await downloadBeautifulCV(improvedResume, {
+      originalDocxBlob: isDocx ? original?.blob : null,
+      companyName: app?.company,
     });
-
-    const blob = await Packer.toBlob(doc);
-    const filename = app ? `CV_${app.company.replace(/\s+/g, "_")}_improved.docx` : "CV_improved.docx";
-    saveAs(blob, filename);
   };
 
   const handleGenerateWithAtsSuggestions = async () => {

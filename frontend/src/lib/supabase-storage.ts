@@ -259,6 +259,19 @@ export async function downloadCVFile(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+export async function getCVFileBlob(): Promise<{ blob: Blob; name: string } | null> {
+  const meta = await getCVFileMeta();
+  if (!meta) return null;
+
+  const { data, error } = await supabase.storage.from("cv-files").download(meta.path);
+  if (error || !data) {
+    console.error("Error fetching CV blob:", error);
+    return null;
+  }
+
+  return { blob: data, name: meta.name };
+}
+
 export async function deleteCVFile(): Promise<boolean> {
   const meta = await getCVFileMeta();
   if (!meta) return false;
