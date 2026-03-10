@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { KanbanBoard } from "@/components/kanban-board";
 import { AuthGuard } from "@/components/auth-guard";
-import { getApplications, updateApplication, createApplication } from "@/lib/supabase-storage";
+import { getApplications, updateApplication, createApplication, getGmailStatus } from "@/lib/supabase-storage";
 import { extractJobFromUrl, type Job } from "@/lib/api";
 import type { Application } from "@/lib/api";
-import { Loader2, Plus, Link2, X, Check } from "lucide-react";
+import { Loader2, Plus, Link2, X, Check, Mail, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,14 +21,61 @@ export default function ApplicationsPage() {
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
-  // Load applications from Supabase
+  // Load applications and Gmail status
   useEffect(() => {
-    getApplications().then((apps) => {
+    Promise.all([
+      getApplications(),
+      getGmailStatus(),
+    ]).then(([apps, gmail]) => {
       setApplications(apps);
+      setGmailConnected(gmail.connected);
+      setLastSynced(gmail.last_synced_at);
       setIsLoading(false);
     });
+
+    // Handle redirect from Gmail OAuth
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("gmail") === "connected") {
+      setSuccessMessage("Gmail connected! Click Sync Inbox to scan your emails.");
+      setGmailConnected(true);
+      window.history.replaceState({}, "", "/applications");
+    } else if (params.get("gmail") === "error") {
+      setSuccessMessage("Gmail connection failed. Please try again.");
+      window.history.replaceState({}, "", "/applications");
+    }
   }, []);
+
+  const handleGmailSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/gmail/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Reload applications to reflect changes
+      const apps = await getApplications();
+      setApplications(apps);
+      setLastSynced(new Date().toISOString());
+
+      const parts = [];
+      if (data.moved > 0) parts.push(`${data.moved} card${data.moved > 1 ? "s" : ""} moved`);
+      if (data.created > 0) parts.push(`${data.created} new card${data.created > 1 ? "s" : ""} created`);
+      setSuccessMessage(
+        parts.length > 0
+          ? `Sync complete — ${parts.join(", ")}.`
+          : `Sync complete — no changes from ${data.processed} emails.`
+      );
+      setTimeout(() => setSuccessMessage(null), 6000);
+    } catch (e) {
+      setSuccessMessage(e instanceof Error ? e.message : "Sync failed.");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleStatusChange = async (id: string, status: string) => {
     // Update in Supabase
@@ -105,7 +152,7 @@ export default function ApplicationsPage() {
   return (
     <AuthGuard>
       <div className="space-y-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent">
               Applications
@@ -114,14 +161,49 @@ export default function ApplicationsPage() {
               Drag cards to update status. Click to view details.
             </p>
           </div>
-          <Button
-            onClick={() => setShowAddModal(true)}
-            size="sm"
-            className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
-          >
-            <Plus className="h-4 w-4" />
-            Add Job via URL
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {gmailConnected ? (
+              <div className="flex items-center gap-2">
+                {lastSynced && (
+                  <span className="text-xs text-purple-400 hidden sm:inline">
+                    Last synced {new Date(lastSynced).toLocaleDateString()}
+                  </span>
+                )}
+                <Button
+                  onClick={handleGmailSync}
+                  disabled={syncing}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+                >
+                  {syncing ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  Sync Inbox
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => { window.location.href = "/api/gmail/connect"; }}
+                size="sm"
+                variant="outline"
+                className="gap-2 border-purple-500/40 text-purple-300 hover:bg-purple-500/10 hover:text-purple-200"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Connect Gmail
+              </Button>
+            )}
+            <Button
+              onClick={() => setShowAddModal(true)}
+              size="sm"
+              className="gap-2 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 shadow-md shadow-purple-500/25"
+            >
+              <Plus className="h-4 w-4" />
+              Add Job via URL
+            </Button>
+          </div>
         </div>
 
         {/* Success Message */}

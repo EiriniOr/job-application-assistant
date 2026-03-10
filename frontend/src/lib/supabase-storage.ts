@@ -285,6 +285,20 @@ export async function deleteCVFile(): Promise<boolean> {
   return true;
 }
 
+// Gmail integration
+export async function getGmailStatus(): Promise<{ connected: boolean; last_synced_at: string | null }> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { connected: false, last_synced_at: null };
+
+  const { data } = await supabase
+    .from("gmail_integrations")
+    .select("last_synced_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  return { connected: !!data, last_synced_at: data?.last_synced_at ?? null };
+}
+
 export async function saveCustomInstructions(instructions: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
