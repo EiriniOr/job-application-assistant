@@ -99,46 +99,60 @@ async function extractPhoto(blob: Blob): Promise<Photo | null> {
   }
 }
 
-// --- Contact line parsing → hyperlink-aware runs ---
+// --- Inline URL detection — works on any string ---
 type Seg = { text: string; href?: string };
 
-function parseContactLine(raw: string): Seg[] {
-  const emailRe = /[\w.+\-]+@[\w\-]+\.[a-z]{2,}/i;
-  const urlRe = /https?:\/\/[^\s|,]+/i;
-  const linkedinRe = /(?:www\.)?linkedin\.com\/in\/[^\s|,]+/i;
+// Matches: emails, https:// URLs, linkedin.com/in/*, github.com/*, www.* URLs
+const LINK_RE =
+  /([\w.+\-]+@[\w\-]+\.[a-z]{2,}|https?:\/\/[^\s,;>)]+|(?:www\.|linkedin\.com\/in\/|github\.com\/)[^\s,;|>)]+)/gi;
 
+function segmentizeText(text: string): Seg[] {
   const segs: Seg[] = [];
-  const parts = raw.split(/\s*\|\s*/);
-  parts.forEach((part, i) => {
-    const p = part.trim();
-    if (!p) return;
-    if (i > 0) segs.push({ text: "   |   " });
-
-    const email = p.match(emailRe)?.[0];
-    const url = p.match(urlRe)?.[0];
-    const li = p.match(linkedinRe)?.[0];
-
-    if (email) {
-      segs.push({ text: p, href: `mailto:${email}` });
-    } else if (url) {
-      segs.push({ text: p, href: url });
-    } else if (li) {
-      segs.push({ text: p, href: `https://${li.replace(/^https?:\/\//, "")}` });
-    } else {
-      segs.push({ text: p });
-    }
-  });
+  let last = 0;
+  let match: RegExpExecArray | null;
+  LINK_RE.lastIndex = 0;
+  while ((match = LINK_RE.exec(text)) !== null) {
+    if (match.index > last) segs.push({ text: text.slice(last, match.index) });
+    const raw = match[0];
+    let href: string;
+    if (raw.includes("@") && !raw.startsWith("http")) href = `mailto:${raw}`;
+    else if (raw.startsWith("http")) href = raw;
+    else href = `https://${raw}`;
+    segs.push({ text: raw, href });
+    last = match.index + raw.length;
+  }
+  if (last < text.length) segs.push({ text: text.slice(last) });
   return segs;
 }
 
-function contactRuns(raw: string) {
-  return parseContactLine(raw).map((seg) => {
-    const run = new TextRun({ text: seg.text, color: seg.href ? C.accentSoft : C.muted, size: 18, font: FONT });
-    if (seg.href) {
-      return new ExternalHyperlink({ children: [run], link: seg.href });
-    }
-    return run;
+function makeRuns(
+  text: string,
+  opts: { size: number; color: string; bold?: boolean }
+): (TextRun | ExternalHyperlink)[] {
+  return segmentizeText(text).map((seg) => {
+    const run = new TextRun({
+      text: seg.text,
+      color: seg.href ? C.accentSoft : opts.color,
+      size: opts.size,
+      bold: opts.bold,
+      font: FONT,
+      ...(seg.href ? { underline: {} } : {}),
+    });
+    return seg.href
+      ? new ExternalHyperlink({ children: [run], link: seg.href })
+      : run;
   });
+}
+
+function contactRuns(raw: string): (TextRun | ExternalHyperlink)[] {
+  // Split on | first so separators are preserved as plain text
+  const parts = raw.split(/\s*\|\s*/);
+  const out: (TextRun | ExternalHyperlink)[] = [];
+  parts.forEach((part, i) => {
+    if (i > 0) out.push(new TextRun({ text: "   |   ", color: C.muted, size: 18, font: FONT }));
+    out.push(...makeRuns(part.trim(), { size: 18, color: C.muted }));
+  });
+  return out;
 }
 
 // --- Paragraph builders ---
@@ -174,7 +188,7 @@ function bulletParagraph(text: string): Paragraph {
   return new Paragraph({
     children: [
       new TextRun({ text: "▸  ", color: C.accent, size: 20, bold: true, font: FONT }),
-      new TextRun({ text: stripBullet(text), size: 20, color: C.text, font: FONT }),
+      ...makeRuns(stripBullet(text), { size: 20, color: C.text }),
     ],
     spacing: { after: 55 },
     indent: { left: 160 },
@@ -191,7 +205,7 @@ function roleLine(text: string): Paragraph {
 
 function contentParagraph(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text: text.trim(), size: 20, color: C.text, font: FONT })],
+    children: makeRuns(text.trim(), { size: 20, color: C.text }),
     spacing: { after: 55 },
   });
 }
