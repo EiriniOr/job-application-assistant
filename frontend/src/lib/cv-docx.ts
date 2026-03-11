@@ -83,7 +83,7 @@ async function getImageDisplaySize(
   maxH = 150
 ): Promise<{ width: number; height: number }> {
   return new Promise((resolve) => {
-    const blob = new Blob([data], { type: `image/${type}` });
+    const blob = new Blob([data.buffer as ArrayBuffer], { type: `image/${type}` });
     const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
