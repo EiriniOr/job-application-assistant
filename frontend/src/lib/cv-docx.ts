@@ -72,6 +72,31 @@ function stripBullet(line: string): string {
 interface Photo {
   data: Uint8Array;
   type: "jpg" | "png";
+  width: number;  // display pixels, aspect-ratio preserved
+  height: number;
+}
+
+async function getImageDisplaySize(
+  data: Uint8Array,
+  type: string,
+  maxW = 110,
+  maxH = 150
+): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const blob = new Blob([data], { type: `image/${type}` });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+      resolve({
+        width: Math.round(img.naturalWidth * scale),
+        height: Math.round(img.naturalHeight * scale),
+      });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: maxW, height: maxH }); };
+    img.src = url;
+  });
 }
 
 async function extractPhoto(blob: Blob): Promise<Photo | null> {
@@ -93,7 +118,10 @@ async function extractPhoto(blob: Blob): Promise<Photo | null> {
     }
     const buf = await zip.files[best].async("arraybuffer");
     const ext = best.split(".").pop()?.toLowerCase() ?? "jpg";
-    return { data: new Uint8Array(buf), type: ext === "jpeg" ? "jpg" : (ext as "jpg" | "png") };
+    const type = ext === "jpeg" ? "jpg" : (ext as "jpg" | "png");
+    const data = new Uint8Array(buf as ArrayBuffer);
+    const { width, height } = await getImageDisplaySize(data, type);
+    return { data, type, width, height };
   } catch {
     return null;
   }
@@ -256,7 +284,7 @@ export async function generateBeautifulCV(
           children: [
             new ImageRun({
               data: photo.data,
-              transformation: { width: 108, height: 138 },
+              transformation: { width: photo.width, height: photo.height },
               type: photo.type,
             }),
           ],

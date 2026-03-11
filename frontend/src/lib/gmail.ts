@@ -1,7 +1,11 @@
 // Server-side Gmail helpers — only used from API routes
 
-const redirectUri = () =>
-  `${process.env.NEXT_PUBLIC_APP_URL}/api/gmail/callback`;
+// NEXT_PUBLIC_APP_URL takes priority; falls back to Vercel's auto-set VERCEL_URL
+const appBase = () =>
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+const redirectUri = () => `${appBase()}/api/gmail/callback`;
 
 export function buildGmailAuthUrl(): string {
   const params = new URLSearchParams({
