@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.redirect(`${origin}/login`);
 
     const tokenExpiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
-    await supabase.from("gmail_integrations").upsert(
+    const { error: upsertError } = await supabase.from("gmail_integrations").upsert(
       {
         user_id: user.id,
         access_token: tokens.access_token,
@@ -43,6 +43,11 @@ export async function GET(request: NextRequest) {
       },
       { onConflict: "user_id" }
     );
+
+    if (upsertError) {
+      console.error("Gmail upsert error:", upsertError);
+      return NextResponse.redirect(`${origin}/applications?gmail=error&reason=${encodeURIComponent(upsertError.message)}`);
+    }
 
     return NextResponse.redirect(`${origin}/applications?gmail=connected`);
   } catch (e) {
