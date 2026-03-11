@@ -7,6 +7,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { getResumeContent, saveResumeContent, getCustomInstructions, saveCustomInstructions, uploadCVFile, getCVFileMeta, downloadCVFile, deleteCVFile } from "@/lib/supabase-storage";
 import { Loader2, Save, Sparkles, FileText, MessageSquare, ChevronDown, ChevronUp, Download, Upload, Trash2 } from "lucide-react";
 import { downloadBeautifulCV } from "@/lib/cv-docx";
+import { downloadBeautifulCVAsPdf } from "@/lib/cv-pdf";
 import { useRef } from "react";
 
 const DEFAULT_INSTRUCTIONS_PREVIEW = `Default AI behavior (used when no custom instructions provided):
@@ -205,6 +206,15 @@ export default function MyPage() {
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Word
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => downloadBeautifulCVAsPdf(resumeText, { companyName: "My_CV" })}
+                disabled={!resumeText}
+                className="border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-500/20 hover:text-white"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
               </Button>
               {resumeSaved && (
                 <span className="text-sm text-emerald-400">Saved!</span>

@@ -10,6 +10,7 @@ import type { Application } from "@/lib/api";
 import { ArrowLeft, ArrowRight, Building2, Loader2, FileText, Trash2, Sparkles, Copy, Check, ExternalLink, Target, ChevronDown, ChevronUp, Wand2, X, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { downloadBeautifulCV } from "@/lib/cv-docx";
+import { downloadBeautifulCVAsPdf } from "@/lib/cv-pdf";
 
 const STATUSES = [
   "saved",
@@ -224,6 +225,15 @@ export default function ApplicationDetailPage() {
     const original = await getCVFileBlob();
     const isDocx = original?.name.endsWith(".docx");
     await downloadBeautifulCV(improvedResume, {
+      originalDocxBlob: isDocx ? original?.blob : null,
+      companyName: app?.company,
+    });
+  };
+
+  const handleDownloadPdf = async () => {
+    const original = await getCVFileBlob();
+    const isDocx = original?.name.endsWith(".docx");
+    await downloadBeautifulCVAsPdf(improvedResume, {
       originalDocxBlob: isDocx ? original?.blob : null,
       companyName: app?.company,
     });
@@ -738,6 +748,15 @@ export default function ApplicationDetailPage() {
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Word
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadPdf}
+                    className="border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-500/20 hover:text-white"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    PDF
                   </Button>
                   <Button
                     variant="ghost"
