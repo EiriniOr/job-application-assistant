@@ -27,26 +27,28 @@ export default function ApplicationsPage() {
 
   // Load applications and Gmail status
   useEffect(() => {
+    // Handle redirect from Gmail OAuth first (synchronous)
+    const params = new URLSearchParams(window.location.search);
+    const gmailParam = params.get("gmail");
+    if (gmailParam === "connected") {
+      setSuccessMessage("Gmail connected! Click Sync Inbox to scan your emails.");
+      setGmailConnected(true);
+      window.history.replaceState({}, "", "/applications");
+    } else if (gmailParam === "error") {
+      setSuccessMessage("Gmail connection failed. Please try again.");
+      window.history.replaceState({}, "", "/applications");
+    }
+
     Promise.all([
       getApplications(),
       getGmailStatus(),
     ]).then(([apps, gmail]) => {
       setApplications(apps);
-      setGmailConnected(gmail.connected);
+      // Don't override to false if OAuth just confirmed connected
+      if (gmailParam !== "connected") setGmailConnected(gmail.connected);
       setLastSynced(gmail.last_synced_at);
       setIsLoading(false);
     });
-
-    // Handle redirect from Gmail OAuth
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("gmail") === "connected") {
-      setSuccessMessage("Gmail connected! Click Sync Inbox to scan your emails.");
-      setGmailConnected(true);
-      window.history.replaceState({}, "", "/applications");
-    } else if (params.get("gmail") === "error") {
-      setSuccessMessage("Gmail connection failed. Please try again.");
-      window.history.replaceState({}, "", "/applications");
-    }
   }, []);
 
   const handleGmailSync = async () => {
