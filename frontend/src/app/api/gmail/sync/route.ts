@@ -41,7 +41,7 @@ Subject: ${email.subject}
 Body: ${email.snippet}
 
 Classification rules:
-- "rejection": any indication they chose other candidates, not moving forward, position filled, unfortunately, regret to inform, tyvärr (Swedish for unfortunately), vi har valt andra kandidater, etc.
+- "rejection": any indication they chose other candidates, not moving forward, position filled, unfortunately, regret to inform. Swedish rejection signals: tyvärr, vi har valt andra kandidater, vi går inte vidare med din ansökan, vi har beslutat att gå vidare med andra kandidater, du är inte längre aktuell, vi tackar för ditt intresse men, tack för din ansökan men, vi har tyvärr valt, angående din ansökan (when followed by rejection tone), tjänsten är tillsatt.
 - "interview_invite": invited to interview, want to schedule a call/meeting
 - "offer": job offer, employment offer
 - "application_confirmed": application received confirmation

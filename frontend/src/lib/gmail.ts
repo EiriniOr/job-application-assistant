@@ -91,9 +91,9 @@ function extractBody(payload: Record<string, unknown>, maxChars = 800): string {
 }
 
 export async function fetchJobEmails(accessToken: string): Promise<GmailEmail[]> {
-  // Search full email text (not just subject) so rejections with generic subjects are caught
+  // Search full email text (not just subject) — broad to catch EN + SV rejections
   const query = encodeURIComponent(
-    '(application OR interview OR offer OR "thank you for" OR unfortunately OR "we regret" OR "not selected" OR "other candidates" OR "not moving forward" OR "position has been filled" OR "next steps" OR tyvärr OR ansökan) newer_than:30d -from:me'
+    '(application OR interview OR offer OR "thank you for" OR unfortunately OR "we regret" OR "not selected" OR "other candidates" OR "not moving forward" OR "position has been filled" OR "next steps" OR tyvärr OR ansökan OR rekrytering OR "andra kandidater" OR "inte gå vidare" OR "gå vidare med andra" OR "inte är aktuell" OR "tackar för" OR "tack för din" OR angående OR tjänsten) newer_than:30d -from:me'
   );
   const listRes = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
