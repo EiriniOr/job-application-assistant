@@ -34,11 +34,20 @@ async function classifyEmail(email: GmailEmail) {
     messages: [
       {
         role: "user",
-        content: `Classify this email in the context of job applications. Return only valid JSON.
+        content: `Classify this email in the context of job applications. Return only valid JSON with no extra text.
 
 From: ${email.from}
 Subject: ${email.subject}
-Preview: ${email.snippet}
+Body: ${email.snippet}
+
+Classification rules:
+- "rejection": any indication they chose other candidates, not moving forward, position filled, unfortunately, regret to inform, tyvärr (Swedish for unfortunately), vi har valt andra kandidater, etc.
+- "interview_invite": invited to interview, want to schedule a call/meeting
+- "offer": job offer, employment offer
+- "application_confirmed": application received confirmation
+- "other": newsletters, unrelated emails, or genuinely ambiguous
+
+Be aggressive about classifying as "rejection" — if the tone is apologetic and they mention other candidates or not proceeding, it is a rejection.
 
 JSON fields:
 - is_job_related: boolean

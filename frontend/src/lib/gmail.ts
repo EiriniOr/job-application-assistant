@@ -64,12 +64,39 @@ export interface GmailEmail {
   snippet: string;
 }
 
+// Extracts plain text from a Gmail message payload (handles multipart recursively)
+function extractBody(payload: Record<string, unknown>, maxChars = 800): string {
+  if (!payload) return "";
+  const mimeType = (payload.mimeType as string) ?? "";
+  const body = payload.body as { data?: string } | undefined;
+
+  if (mimeType === "text/plain" && body?.data) {
+    return Buffer.from(body.data, "base64url").toString("utf-8").slice(0, maxChars);
+  }
+  // Prefer text/plain part in multipart
+  const parts = (payload.parts as Record<string, unknown>[] | undefined) ?? [];
+  for (const part of parts) {
+    const text = extractBody(part, maxChars);
+    if (text) return text;
+  }
+  // Fall back to text/html if nothing else
+  if (mimeType === "text/html" && body?.data) {
+    return Buffer.from(body.data, "base64url")
+      .toString("utf-8")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .slice(0, maxChars);
+  }
+  return "";
+}
+
 export async function fetchJobEmails(accessToken: string): Promise<GmailEmail[]> {
+  // Search full email text (not just subject) so rejections with generic subjects are caught
   const query = encodeURIComponent(
-    'subject:(interview OR offer OR "thank you for" OR "unfortunately" OR "we regret" OR "next steps" OR application) newer_than:30d -from:me'
+    '(application OR interview OR offer OR "thank you for" OR unfortunately OR "we regret" OR "not selected" OR "other candidates" OR "not moving forward" OR "position has been filled" OR "next steps" OR tyvärr OR ansökan) newer_than:30d -from:me'
   );
   const listRes = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=40`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=50`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   if (!listRes.ok) throw new Error(`Gmail list failed: ${await listRes.text()}`);
@@ -78,14 +105,17 @@ export async function fetchJobEmails(accessToken: string): Promise<GmailEmail[]>
   const emails: GmailEmail[] = [];
   for (const { id } of messages as { id: string }[]) {
     const msgRes = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
     if (!msgRes.ok) continue;
     const data = await msgRes.json();
     const headers: { name: string; value: string }[] = data.payload?.headers ?? [];
     const get = (n: string) => headers.find((h) => h.name === n)?.value ?? "";
-    emails.push({ id, from: get("From"), subject: get("Subject"), snippet: data.snippet ?? "" });
+    const body = extractBody(data.payload);
+    // Use body if available, else fall back to snippet
+    const snippet = body || (data.snippet ?? "");
+    emails.push({ id, from: get("From"), subject: get("Subject"), snippet });
   }
   return emails;
 }
