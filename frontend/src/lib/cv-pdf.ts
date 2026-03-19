@@ -193,16 +193,16 @@ class PDFWriter {
     const clean = text.trim().toUpperCase().replace(/[:\-–—]+$/, "");
     this.doc.setFontSize(10);
     this.doc.setFont("helvetica", "bold");
-    this.ensureSpace(pt(10) * 3);
-    this.y += pt(10) * 1.2; // spacing before
+    this.ensureSpace(pt(10) * 4);
+    this.y += pt(10) * 1.4; // spacing before
     this.rgb(C.accent);
     this.doc.text(clean, MARGIN, this.y);
-    this.y += pt(10) * 0.6;
+    this.y += pt(10) * 1.0; // enough gap so line clears descenders
     // Thin border
     this.doc.setDrawColor(C.border[0], C.border[1], C.border[2]);
     this.doc.setLineWidth(0.2);
     this.doc.line(MARGIN, this.y, PAGE_W - MARGIN, this.y);
-    this.y += pt(10) * 0.5;
+    this.y += pt(10) * 0.6;
   }
 
   /** Horizontal divider in accent. */
@@ -245,25 +245,24 @@ class PDFWriter {
     this.y += lines.length * lineH;
   }
 
-  /** Body paragraph. Inline links on single-line segments; wraps long text. */
+  /** Body paragraph. Wraps text to page width; renders links inline per line. */
   contentParagraph(text: string) {
     this.doc.setFontSize(9);
     this.doc.setFont("helvetica", "normal");
     const lineH = pt(9) * 1.5;
-    const segs = segmentize(text.trim());
-    const hasLinks = segs.some((s) => s.href);
-
-    if (hasLinks) {
-      // Render inline — single logical line (may overflow on very long lines)
-      this.ensureSpace(lineH);
-      this.drawSegs(segs, MARGIN, C.text, 9);
+    // Always split to width first — prevents overflow for both plain and link text
+    const lines = this.doc.splitTextToSize(text.trim(), CONTENT_W) as string[];
+    this.ensureSpace(lines.length * lineH);
+    for (const line of lines) {
+      const lineSegs = segmentize(line);
+      const hasLinks = lineSegs.some((s) => s.href);
+      if (hasLinks) {
+        this.drawSegs(lineSegs, MARGIN, C.text, 9);
+      } else {
+        this.rgb(C.text);
+        this.doc.text(line, MARGIN, this.y);
+      }
       this.y += lineH;
-    } else {
-      const lines = this.doc.splitTextToSize(text.trim(), CONTENT_W) as string[];
-      this.ensureSpace(lines.length * lineH);
-      this.rgb(C.text);
-      this.doc.text(lines, MARGIN, this.y);
-      this.y += lines.length * lineH;
     }
   }
 }
