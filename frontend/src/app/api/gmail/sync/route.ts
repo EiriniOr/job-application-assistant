@@ -147,27 +147,31 @@ export async function POST() {
         .eq("user_id", user.id);
     }
 
-    // Fetch job-related emails
-    const emails = await fetchJobEmails(accessToken);
+    // Fetch emails and applications in parallel
+    const [emails, appsResult] = await Promise.all([
+      fetchJobEmails(accessToken),
+      supabase.from("applications").select("id, company, job_title, status").eq("user_id", user.id),
+    ]);
 
-    // Load user's applications
-    const { data: appsData } = await supabase
-      .from("applications")
-      .select("id, company, job_title, status")
-      .eq("user_id", user.id);
     const applications: { id: string; company: string; job_title: string; status: string }[] =
-      appsData ?? [];
+      appsResult.data ?? [];
+
+    // Classify all emails in parallel (cap concurrency to avoid rate limits)
+    const CONCURRENCY = 5;
+    const classified: { email: GmailEmail; result: Awaited<ReturnType<typeof classifyEmail>> | null }[] = [];
+    for (let i = 0; i < emails.length; i += CONCURRENCY) {
+      const batch = emails.slice(i, i + CONCURRENCY);
+      const results = await Promise.all(
+        batch.map((e) => classifyEmail(e).catch(() => null))
+      );
+      results.forEach((result, j) => classified.push({ email: batch[j], result }));
+    }
 
     let moved = 0;
     let created = 0;
 
-    for (const email of emails) {
-      let classification;
-      try {
-        classification = await classifyEmail(email);
-      } catch {
-        continue;
-      }
+    for (const { email, result: classification } of classified) {
+      if (!classification) continue;
 
       if (!classification.is_job_related || classification.type === "other") continue;
 
