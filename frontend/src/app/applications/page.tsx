@@ -21,6 +21,7 @@ export default function ApplicationsPage() {
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [gmailConnected, setGmailConnected] = useState(false);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -73,7 +74,8 @@ export default function ApplicationsPage() {
       );
       setTimeout(() => setSuccessMessage(null), 6000);
     } catch (e) {
-      setSuccessMessage(e instanceof Error ? e.message : "Sync failed.");
+      setSyncError(e instanceof Error ? e.message : "Sync failed.");
+      setTimeout(() => setSyncError(null), 8000);
     } finally {
       setSyncing(false);
     }
@@ -213,6 +215,14 @@ export default function ApplicationsPage() {
           <div className="p-3 bg-emerald-900/40 border border-emerald-500/50 rounded-lg text-emerald-300 text-sm flex items-center gap-2">
             <Check className="h-4 w-4" />
             {successMessage}
+          </div>
+        )}
+
+        {/* Sync Error */}
+        {syncError && (
+          <div className="p-3 bg-red-900/40 border border-red-500/50 rounded-lg text-red-300 text-sm flex items-center gap-2">
+            <X className="h-4 w-4 flex-shrink-0" />
+            {syncError}
           </div>
         )}
 

@@ -102,20 +102,30 @@ export async function fetchJobEmails(accessToken: string): Promise<GmailEmail[]>
   if (!listRes.ok) throw new Error(`Gmail list failed: ${await listRes.text()}`);
   const { messages = [] } = await listRes.json();
 
+  // Fetch all message bodies in parallel (capped at 20 to stay within timeout)
+  const ids = (messages as { id: string }[]).slice(0, 20).map((m) => m.id);
+  const fetched = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const msgRes = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        if (!msgRes.ok) return null;
+        return await msgRes.json();
+      } catch {
+        return null;
+      }
+    })
+  );
+
   const emails: GmailEmail[] = [];
-  for (const { id } of messages as { id: string }[]) {
-    const msgRes = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    if (!msgRes.ok) continue;
-    const data = await msgRes.json();
+  for (const data of fetched) {
+    if (!data) continue;
     const headers: { name: string; value: string }[] = data.payload?.headers ?? [];
-    const get = (n: string) => headers.find((h) => h.name === n)?.value ?? "";
+    const get = (n: string) => headers.find((h: { name: string; value: string }) => h.name === n)?.value ?? "";
     const body = extractBody(data.payload);
-    // Use body if available, else fall back to snippet
-    const snippet = body || (data.snippet ?? "");
-    emails.push({ id, from: get("From"), subject: get("Subject"), snippet });
+    emails.push({ id: data.id, from: get("From"), subject: get("Subject"), snippet: body || (data.snippet ?? "") });
   }
   return emails;
 }

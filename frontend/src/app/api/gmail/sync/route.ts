@@ -218,7 +218,8 @@ export async function POST() {
 
     return NextResponse.json({ moved, created, processed: emails.length });
   } catch (e) {
-    console.error("Gmail sync error:", e);
-    return NextResponse.json({ error: "Sync failed" }, { status: 500 });
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("Gmail sync error:", msg);
+    return NextResponse.json({ error: `Sync failed: ${msg}` }, { status: 500 });
   }
 }
