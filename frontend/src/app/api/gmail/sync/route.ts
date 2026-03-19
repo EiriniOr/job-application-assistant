@@ -136,15 +136,25 @@ export async function POST() {
       new Date(gmailRow.token_expiry) <= new Date(Date.now() + 5 * 60_000);
 
     if (isExpired && gmailRow.refresh_token) {
-      const refreshed = await refreshAccessToken(gmailRow.refresh_token);
-      accessToken = refreshed.access_token;
-      await supabase
-        .from("gmail_integrations")
-        .update({
-          access_token: refreshed.access_token,
-          token_expiry: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
-        })
-        .eq("user_id", user.id);
+      try {
+        const refreshed = await refreshAccessToken(gmailRow.refresh_token);
+        accessToken = refreshed.access_token;
+        await supabase
+          .from("gmail_integrations")
+          .update({
+            access_token: refreshed.access_token,
+            token_expiry: new Date(Date.now() + refreshed.expires_in * 1000).toISOString(),
+          })
+          .eq("user_id", user.id);
+      } catch (refreshErr) {
+        const msg = refreshErr instanceof Error ? refreshErr.message : String(refreshErr);
+        if (msg.includes("invalid_grant")) {
+          // Token revoked or expired — delete stale row so UI resets to "Connect Gmail"
+          await supabase.from("gmail_integrations").delete().eq("user_id", user.id);
+          return NextResponse.json({ error: "gmail_disconnected" }, { status: 401 });
+        }
+        throw refreshErr;
+      }
     }
 
     // Fetch emails and applications in parallel

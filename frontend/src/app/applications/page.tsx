@@ -57,7 +57,15 @@ export default function ApplicationsPage() {
     try {
       const res = await fetch("/api/gmail/sync", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        if (data.error === "gmail_disconnected") {
+          setGmailConnected(false);
+          setSyncError("Gmail session expired — please reconnect.");
+          setTimeout(() => setSyncError(null), 8000);
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       // Reload applications to reflect changes
       const apps = await getApplications();
