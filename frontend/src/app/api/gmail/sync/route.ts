@@ -9,6 +9,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const STATUS_MAP: Record<string, string> = {
   rejection: "rejected",
   interview_invite: "interview",
+  assessment_invite: "assessment",
   offer: "offer",
   application_confirmed: "applied",
 };
@@ -16,15 +17,41 @@ const STATUS_MAP: Record<string, string> = {
 // Only advance status — never go backwards. Rejections always apply.
 function shouldUpdateStatus(current: string, next: string): boolean {
   if (next === "rejected") return true;
-  const p: Record<string, number> = { saved: 0, applied: 1, interview: 2, offer: 3 };
+  const p: Record<string, number> = { saved: 0, applied: 1, assessment: 2, interview: 3, offer: 4 };
   return (p[next] ?? 0) > (p[current] ?? 0);
 }
 
-function matchesCompany(emailCompany: string, appCompany: string): boolean {
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const a = norm(emailCompany);
-  const b = norm(appCompany);
-  return a.length > 2 && b.length > 2 && (a.includes(b) || b.includes(a));
+// Common generic words that shouldn't drive a company match on their own
+const GENERIC = new Set([
+  "data", "scientist", "engineer", "manager", "senior", "junior", "lead",
+  "the", "and", "for", "with", "services", "group", "global", "solutions",
+  "digital", "technology", "technologies", "consulting", "graduate", "programme",
+  "program", "position", "role", "team",
+]);
+
+function significantWords(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !GENERIC.has(w));
+}
+
+// Match on company name OR job title word overlap (catches parent/subsidiary pairs like TRATON/Scania)
+function matchesApplication(
+  emailCompany: string,
+  emailJobTitle: string,
+  app: { company: string; job_title: string }
+): boolean {
+  const emailWords = new Set([
+    ...significantWords(emailCompany),
+    ...significantWords(emailJobTitle),
+  ]);
+  const appWords = [
+    ...significantWords(app.company),
+    ...significantWords(app.job_title),
+  ];
+  return appWords.some((w) => emailWords.has(w));
 }
 
 async function classifyEmail(email: GmailEmail) {
@@ -41,17 +68,18 @@ Subject: ${email.subject}
 Body: ${email.snippet}
 
 Classification rules:
-- "rejection": any indication they chose other candidates, not moving forward, position filled, unfortunately, regret to inform. Swedish rejection signals: tyvärr, vi har valt andra kandidater, vi går inte vidare med din ansökan, vi har beslutat att gå vidare med andra kandidater, du är inte längre aktuell, vi tackar för ditt intresse men, tack för din ansökan men, vi har tyvärr valt, angående din ansökan (when followed by rejection tone), tjänsten är tillsatt.
-- "interview_invite": invited to interview, want to schedule a call/meeting
-- "offer": job offer, employment offer
-- "application_confirmed": application received confirmation
-- "other": newsletters, unrelated emails, or genuinely ambiguous
+- "rejection": chose other candidates, not moving forward, position filled, unfortunately, regret to inform, will keep you in mind / keep your profile for future opportunities (this IS a rejection for the current role). Swedish: tyvärr, vi har valt andra kandidater, vi går inte vidare med din ansökan, vi har beslutat att gå vidare med andra kandidater, du är inte längre aktuell, vi tackar för ditt intresse men, tack för din ansökan men, vi har tyvärr valt, tjänsten är tillsatt, vi sparar din profil (keeping profile = rejection).
+- "assessment_invite": invited to complete an online test, case study, assignment, coding challenge, or any take-home task/assessment before an interview.
+- "interview_invite": explicitly invited to a live interview, phone screen, or video call with a person.
+- "offer": job offer, employment contract offer.
+- "application_confirmed": application received/registered confirmation only.
+- "other": newsletters, unrelated emails, or genuinely ambiguous.
 
-Be aggressive about classifying as "rejection" — if the tone is apologetic and they mention other candidates or not proceeding, it is a rejection.
+Be aggressive about classifying as "rejection" — apologetic tone + other candidates or "not at this time" = rejection. "We'll keep your profile" = rejection.
 
 JSON fields:
 - is_job_related: boolean
-- type: "rejection" | "interview_invite" | "offer" | "application_confirmed" | "other"
+- type: "rejection" | "assessment_invite" | "interview_invite" | "offer" | "application_confirmed" | "other"
 - company: string (company name, empty string if unknown)
 - job_title: string (job title, empty string if unknown)
 
@@ -147,7 +175,7 @@ export async function POST() {
       if (!newStatus) continue;
 
       const match = applications.find((a) =>
-        matchesCompany(classification.company, a.company)
+        matchesApplication(classification.company, classification.job_title, a)
       );
 
       if (match) {
