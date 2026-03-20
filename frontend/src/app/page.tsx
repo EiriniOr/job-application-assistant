@@ -775,58 +775,30 @@ export default function Dashboard() {
     <div className="space-y-10">
 
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-950 via-slate-900 to-indigo-950 p-8 md:p-12 text-white shadow-2xl border border-purple-500/20">
-        {/* Subtle grid */}
-        <div className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: "linear-gradient(rgba(139,92,246,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.6) 1px, transparent 1px)",
-            backgroundSize: "36px 36px",
-          }} />
-        {/* Glow orbs */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-12 w-96 h-96 bg-indigo-700/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-fuchsia-600/10 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12">
-          {/* Left */}
-          <div className="flex-1 space-y-5">
+      <div className="pt-4 pb-2 text-white">
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+          <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-fuchsia-400" />
-              <span className="text-fuchsia-300 text-sm font-medium tracking-wide">
+              <Sparkles className="h-3.5 w-3.5 text-fuchsia-400" />
+              <span className="text-fuchsia-300 text-xs font-medium tracking-wide">
                 AI-powered job search assistant
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.05]">
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-tight">
               <span className="bg-gradient-to-r from-white via-violet-100 to-fuchsia-200 bg-clip-text text-transparent">
                 JobbaJobba
               </span>
             </h1>
-            <p className="text-lg text-slate-300 max-w-lg leading-relaxed">
+            <p className="text-sm text-slate-400 max-w-lg leading-relaxed">
               From raw CV to tailored application — search, score, rewrite, and track every job in one streamlined workspace.
             </p>
             {!user && (
-              <div className="space-y-3 pt-1">
-                <div className="flex gap-3 flex-wrap">
-                  <Link href="/login">
-                    <Button className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-semibold px-6 py-3 shadow-lg shadow-purple-500/30 hover:-translate-y-0.5 transition-all">
-                      <Rocket className="h-4 w-4 mr-2" />
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link href="/jobs">
-                    <Button variant="outline" className="border-purple-400/40 text-purple-200 hover:bg-purple-500/10 hover:text-white px-6 py-3 transition-all">
-                      Browse Jobs
-                    </Button>
-                  </Link>
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
-                  * Access is by invitation only. The app runs on personal API infrastructure — operating costs prevent open public access.
-                </p>
-              </div>
+              <p className="text-xs text-slate-600">
+                * Invite-only — runs on personal API infrastructure.
+              </p>
             )}
           </div>
-          {/* Right: illustration */}
-          <div className="w-full md:w-[480px] h-56 md:h-64 flex-shrink-0">
+          <div className="w-full md:w-[380px] h-44 flex-shrink-0 opacity-80">
             <HeroIllustration />
           </div>
         </div>
