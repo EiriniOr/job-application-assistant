@@ -9,7 +9,7 @@ import { getApplications } from "@/lib/supabase-storage";
 import type { Application } from "@/lib/api";
 import {
   Briefcase, FileText, Clock, Trophy, Loader2, Rocket, Sparkles,
-  Search, Target, Wand2, ChevronRight,
+  Search, Target, Wand2, ChevronRight, Mail,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -418,6 +418,65 @@ const KanbanIllustration = () => (
   </svg>
 );
 
+const GmailIllustration = () => (
+  <svg viewBox="0 0 320 210" fill="none" xmlns="http://www.w3.org/2000/svg"
+    className="w-full h-full" aria-hidden="true">
+    {/* Inbox panel */}
+    <rect x="4" y="10" width="130" height="190" rx="7" fill="#0f172a" opacity="0.8" />
+    <rect x="4" y="10" width="130" height="26" rx="7" fill="#1e3a2a" opacity="0.9" />
+    <text x="69" y="27" textAnchor="middle" fill="#4ade80" fontSize="8"
+      fontFamily="system-ui" fontWeight="700" letterSpacing="0.5">INBOX</text>
+    {/* Email rows */}
+    {[
+      { y: 46, color: "#fca5a5", label: "Application update — Scania", tag: "rejection", tagColor: "#ef4444" },
+      { y: 74, color: "#86efac", label: "Interview invite — BCG X", tag: "interview", tagColor: "#22c55e" },
+      { y: 102, color: "#fde68a", label: "Offer — Spotify", tag: "offer", tagColor: "#f59e0b" },
+      { y: 130, color: "#94a3b8", label: "Thank you — Nordea", tag: "rejection", tagColor: "#ef4444" },
+    ].map(({ y, color, label, tag, tagColor }) => (
+      <g key={y}>
+        <rect x="10" y={y} width="118" height="22" rx="4" fill="#1e293b" opacity="0.9" />
+        <rect x="14" y={y + 5} width="4" height="4" rx="2" fill={color} opacity="0.9" />
+        <text x="22" y={y + 11} fill="#cbd5e1" fontSize="5.5"
+          fontFamily="system-ui" fontWeight="500">{label}</text>
+        <rect x="14" y={y + 14} width="28" height="5" rx="2.5" fill={tagColor} opacity="0.25" />
+        <text x="28" y={y + 18.5} textAnchor="middle" fill={tagColor} fontSize="4.5"
+          fontFamily="system-ui" fontWeight="700">{tag}</text>
+      </g>
+    ))}
+    {/* Arrows from inbox to kanban columns */}
+    <path d="M134 57 L168 80" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.7" markerEnd="url(#arr-red)" />
+    <path d="M134 85 L168 120" stroke="#22c55e" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.7" markerEnd="url(#arr-grn)" />
+    <path d="M134 113 L168 160" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.7" markerEnd="url(#arr-yel)" />
+    <defs>
+      {["arr-red:#ef4444", "arr-grn:#22c55e", "arr-yel:#f59e0b"].map((s) => {
+        const [id, color] = s.split(":");
+        return <marker key={id} id={id} markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0 0 L6 3 L0 6 Z" fill={color} opacity="0.8" />
+        </marker>;
+      })}
+    </defs>
+    {/* Kanban output columns */}
+    {[
+      { x: 168, y: 60, h: 40, fill: "#3b0764", hdr: "#7c3aed", lbl: "#f472b6", title: "REJECTED" },
+      { x: 168, y: 108, h: 35, fill: "#0c2a1a", hdr: "#166534", lbl: "#86efac", title: "INTERVIEW" },
+      { x: 168, y: 148, h: 35, fill: "#1a1200", hdr: "#78350f", lbl: "#fde68a", title: "OFFER" },
+    ].map(({ x, y, h, fill, hdr, lbl, title }) => (
+      <g key={title}>
+        <rect x={x} y={y} width="144" height={h} rx="5" fill={fill} opacity="0.7" />
+        <rect x={x} y={y} width="144" height="16" rx="5" fill={hdr} opacity="0.9" />
+        <text x={x + 72} y={y + 11} textAnchor="middle" fill={lbl}
+          fontSize="7" fontFamily="system-ui" fontWeight="700" letterSpacing="0.5">{title}</text>
+        <rect x={x + 8} y={y + 22} width="90" height="4" rx="2" fill={lbl} opacity="0.3" />
+        <rect x={x + 8} y={y + 29} width="60" height="3" rx="1.5" fill={lbl} opacity="0.2" />
+      </g>
+    ))}
+    {/* AI chip */}
+    <rect x="148" y="96" width="20" height="12" rx="4" fill="#1e293b" stroke="#818cf8" strokeWidth="0.8" />
+    <text x="158" y="105" textAnchor="middle" fill="#818cf8" fontSize="5"
+      fontFamily="system-ui" fontWeight="700">AI</text>
+  </svg>
+);
+
 // ─── Feature data ─────────────────────────────────────────────────────────────
 const FEATURES = [
   {
@@ -467,7 +526,7 @@ const FEATURES = [
       "ATS-optimised structure: clear sections, standard headers, no fancy tables",
       "Truthful rewrite — never invents skills or fabricates experience",
       "Output in English or Swedish regardless of your original CV language",
-      "Downloads as a polished Word doc with your photo and hyperlinks intact",
+      "Downloads as polished Word or PDF — photo, hyperlinks, and formatting intact",
     ],
     illustration: <CVIllustration />,
   },
@@ -498,12 +557,29 @@ const FEATURES = [
     description:
       "A drag-and-drop Kanban board moves applications through every stage — from saved through assessment to offer. Notes, cover letters, and ATS scores stored per card.",
     bullets: [
-      "Pipeline: Saved → Applied → Assessment → Interview → Offer",
+      "Pipeline: Saved → Applied → Assessment → Interview → Offer → Rejected",
       "Drag cards between stages with a single gesture",
       "Per-application notes, cover letters, and ATS scores stored in the cloud",
       "Timeline view: saved date, applied date, and last updated — all on one screen",
     ],
     illustration: <KanbanIllustration />,
+  },
+  {
+    id: "gmail",
+    label: "Gmail Sync",
+    icon: Mail,
+    accent: "#34d399",
+    activeClass: "border-emerald-400/60 bg-emerald-500/10 text-emerald-200",
+    title: "Inbox → board, automatically",
+    description:
+      "Connect Gmail and the board updates itself. Rejection emails move cards to Rejected, interview invites to Interview, offers to Offer — and if no matching card exists, one is created.",
+    bullets: [
+      "One-click OAuth — connect Gmail securely, no passwords stored",
+      "AI reads each email and classifies: rejection, interview invite, offer, or assessment",
+      "Matches emails to existing cards by company name; creates a new card if none found",
+      "Supports Swedish and English — tyvärr, tack för din ansökan, and more",
+    ],
+    illustration: <GmailIllustration />,
   },
 ];
 
